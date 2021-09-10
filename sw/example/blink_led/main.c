@@ -77,8 +77,8 @@ int main() {
   neorv32_uart_setup(BAUD_RATE, PARITY_NONE, FLOW_CONTROL_NONE);
 
   // check if GPIO unit is implemented at all
-  if (neorv32_gpio_available() == 0) {
-    neorv32_uart_print("Error! No GPIO unit synthesized!\n");
+  if (neorv32_cfs_available() == 0) {
+    neorv32_uart_print("Error! No CFS unit synthesized!\n");
     return 1; // nope, no GPIO unit synthesized
   }
 
@@ -87,35 +87,16 @@ int main() {
   neorv32_rte_setup();
 
   // say hello
-  neorv32_uart_print("Blinking LED demo program\n");
+  // neorv32_uart_print("Blinking LED demo program\n");
 
+  CFS_REG_0 = 1;
+  neorv32_uart_printf("%u", CFS_REG_0);
+  CFS_REG_0 = 2;
+  neorv32_uart_printf("%u", CFS_REG_0);
+  CFS_REG_1 = 0xfffffffe;
+  neorv32_uart_printf("%u", CFS_REG_1);
+  CFS_REG_1 = 0xfffffffa;
+  neorv32_uart_printf("%u", CFS_REG_1);
 
-// use ASM version of LED blinking (file: blink_led_in_asm.S)
-#ifdef USE_ASM_VERSION
-
-  blink_led_asm((uint32_t)(&GPIO_OUTPUT));
-
-// use C version of LED blinking
-#else
-
-  blink_led_c();
-
-#endif
   return 0;
-}
-
-
-/**********************************************************************//**
- * C-version of blinky LED counter
- **************************************************************************/
-void blink_led_c(void) {
-
-  neorv32_gpio_port_set(0); // clear gpio output
-
-  int cnt = 0;
-
-  while (1) {
-    neorv32_gpio_port_set(cnt++ & 0xFF); // increment counter and mask for lowest 8 bit
-    neorv32_cpu_delay_ms(200); // wait 200ms using busy wait
-  }
 }

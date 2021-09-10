@@ -241,10 +241,10 @@ begin
 
   cfs_core: process(cfs_reg_wr)
   begin
-    cfs_reg_rd(0) <= not cfs_reg_wr(0); -- just invert the written value
+    cfs_reg_rd(0) <= cfs_reg_wr(0); -- just invert the written value
     cfs_reg_rd(1) <= not cfs_reg_wr(1);
-    cfs_reg_rd(2) <= not cfs_reg_wr(2);
-    cfs_reg_rd(3) <= not cfs_reg_wr(3);
+    cfs_reg_rd(2) <= cfs_reg_wr(2);
+    cfs_reg_rd(3) <= cfs_reg_wr(3);
   end process cfs_core;
 
 

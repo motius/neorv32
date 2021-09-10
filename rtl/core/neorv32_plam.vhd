@@ -83,40 +83,23 @@ begin
   rden   <= acc_en and rden_i; -- the read access is always a full 32-bit word wide; if required, the byte/half-word select/masking is done in the CPU
 
 
-  -- Read/Write Access ----------------------------------------------------------------------
-  -- -------------------------------------------------------------------------------------------
-  host_access: process(clk_i)
+  rw_access: process(clk_i)
   begin
-    if rising_edge(clk_i) then -- synchronous interface for reads and writes
-      -- transfer/access acknowledge --
-      ack_o <= rden or wren; -- default: required for the CPU to check the CFS is answering a bus read OR write request; all r/w accesses (to any cfs_reg) will succeed
---    ack_o <= rden; -- use this construct if your CFS is read-only
---    ack_o <= wren; -- use this construct if your CFS is write-only
---    ack_o <= ... -- or define the ACK by yourself (example: some registers are read-only, some others can only be written, ...)
+    if rising_edge(clk_i) then
+      -- bus handshake --
+      ack_o <= acc_en and (rden_i or wren_i);
 
       -- write access --
-      if (wren = '1') then -- word-wide write-access only!
-        case addr is -- make sure to use the internal "addr" signal for the read/write interface
-          when plam_in_addr_c => inp_data <= data_i; -- for example: control register
-          when others          => NULL;
-        end case;
+      if ((acc_en and wren_i) = '1') then
+        inp_data <= data_i;
       end if;
 
       -- read access --
-      data_o <= (others => '0'); -- the output has to be zero if there is no actual read access
-      if (rden = '1') then -- the read access is always a full 32-bit word wide; if required, the byte/half-word select/masking is done in the CPU
-        case addr is -- make sure to use the internal 'addr' signal for the read/write interface
-          when plam_in_addr_c  => data_o <= inp_data;
-          when plam_out_addr_c => data_o <= out_data;
-          when others          => data_o <= (others => '0'); -- the remaining registers are not implemented and will read as zero
-        end case;
+      data_o <= (others => '0');
+      if ((acc_en and rden_i) = '1') then
+        data_o <= inp_data;
       end if;
     end if;
-  end process host_access;
-
-  cfs_core: process(inp_data)
-  begin
-    out_data <= inp_data; -- just invert the written value
-  end process cfs_core;
+  end process rw_access;
 
 end neorv32_plam_rtl;

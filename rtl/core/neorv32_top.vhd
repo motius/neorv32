@@ -115,6 +115,7 @@ entity neorv32_top is
 
     -- Processor peripherals --
     IO_GPIO_EN                   : boolean := false;  -- implement general purpose input/output port unit (GPIO)?
+    IO_PLAM_EN                   : boolean := false;  -- implement general purpose input/output port unit (PLAM)?
     IO_MTIME_EN                  : boolean := false;  -- implement machine system timer (MTIME)?
     IO_UART0_EN                  : boolean := false;  -- implement primary universal asynchronous receiver/transmitter (UART0)?
     IO_UART1_EN                  : boolean := false;  -- implement secondary universal asynchronous receiver/transmitter (UART1)?
@@ -172,6 +173,10 @@ entity neorv32_top is
     -- GPIO (available if IO_GPIO_EN = true) --
     gpio_o         : out std_ulogic_vector(63 downto 0); -- parallel output
     gpio_i         : in  std_ulogic_vector(63 downto 0) := (others => 'U'); -- parallel input
+
+    -- PLAM (available if IO_PLAM_EN = true) --
+    plam_o         : out std_ulogic_vector(63 downto 0); -- parallel output
+    plam_i         : in  std_ulogic_vector(63 downto 0) := (others => 'U'); -- parallel input
 
     -- primary UART0 (available if IO_UART0_EN = true) --
     uart0_txd_o    : out std_ulogic; -- UART0 send data
@@ -304,7 +309,8 @@ architecture neorv32_top_rtl of neorv32_top is
 
   -- module response bus - device ID --
   type resp_bus_id_t is (RESP_IMEM, RESP_DMEM, RESP_BOOTROM, RESP_WISHBONE, RESP_GPIO, RESP_MTIME, RESP_UART0, RESP_UART1, RESP_SPI,
-                         RESP_TWI, RESP_PWM, RESP_WDT, RESP_TRNG, RESP_CFS, RESP_NEOLED, RESP_SYSINFO, RESP_OCD, RESP_SLINK, RESP_XIRQ);
+                         RESP_TWI, RESP_PWM, RESP_WDT, RESP_TRNG, RESP_CFS, RESP_NEOLED, RESP_SYSINFO, RESP_OCD, RESP_SLINK, RESP_XIRQ,
+                         RESP_PLAM);
 
   -- module response bus --
   type resp_bus_t is array (resp_bus_id_t) of resp_bus_entry_t;
@@ -344,6 +350,7 @@ begin
   assert false report
   "NEORV32 PROCESSOR IO Configuration: " &
   cond_sel_string_f(IO_GPIO_EN, "GPIO ", "") &
+  cond_sel_string_f(IO_PLAM_EN, "PLAM ", "") &
   cond_sel_string_f(IO_MTIME_EN, "MTIME ", "") &
   cond_sel_string_f(IO_UART0_EN, "UART0 ", "") &
   cond_sel_string_f(IO_UART1_EN, "UART1 ", "") &
@@ -931,6 +938,32 @@ begin
     gpio_o <= (others => '0');
   end generate;
 
+  -- General Purpose Input/Output Port (PLAM) -----------------------------------------------
+  -- -------------------------------------------------------------------------------------------
+  neorv32_plam_inst_true:
+  if (IO_PLAM_EN = true) generate
+    neorv32_plam_inst: neorv32_plam
+    port map (
+      -- host access --
+      clk_i  => clk_i,                     -- global clock line
+      addr_i => p_bus.addr,                -- address
+      rden_i => io_rden,                   -- read enable
+      wren_i => io_wren,                   -- write enable
+      data_i => p_bus.wdata,               -- data in
+      data_o => resp_bus(RESP_PLAM).rdata, -- data out
+      ack_o  => resp_bus(RESP_PLAM).ack,   -- transfer acknowledge
+      -- parallel io --
+      plam_o => plam_o,
+      plam_i => plam_i
+    );
+    resp_bus(RESP_PLAM).err <= '0'; -- no access error possible
+  end generate;
+
+  neorv32_plam_inst_false:
+  if (IO_PLAM_EN = false) generate
+    resp_bus(RESP_PLAM) <= resp_bus_entry_terminate_c;
+    plam_o <= (others => '0');
+  end generate;
 
   -- Watch Dog Timer (WDT) ------------------------------------------------------------------
   -- -------------------------------------------------------------------------------------------
@@ -1392,6 +1425,7 @@ begin
     ON_CHIP_DEBUGGER_EN          => ON_CHIP_DEBUGGER_EN,  -- implement OCD?
     -- Processor peripherals --
     IO_GPIO_EN                   => IO_GPIO_EN,           -- implement general purpose input/output port unit (GPIO)?
+    IO_PLAM_EN                   => IO_PLAM_EN,           -- implement general purpose input/output port unit (PLAM)?
     IO_MTIME_EN                  => IO_MTIME_EN,          -- implement machine system timer (MTIME)?
     IO_UART0_EN                  => IO_UART0_EN,          -- implement primary universal asynchronous receiver/transmitter (UART0)?
     IO_UART1_EN                  => IO_UART1_EN,          -- implement secondary universal asynchronous receiver/transmitter (UART1)?

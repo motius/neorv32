@@ -265,6 +265,12 @@ package neorv32_package is
   constant gpio_out_lo_addr_c   : std_ulogic_vector(data_width_c-1 downto 0) := x"ffffffc8";
   constant gpio_out_hi_addr_c   : std_ulogic_vector(data_width_c-1 downto 0) := x"ffffffcc";
 
+  -- General Purpose Input/Output Controller (PLAM) --
+  constant plam_base_c          : std_ulogic_vector(data_width_c-1 downto 0) := x"ffffffc0"; -- base address
+  constant plam_size_c          : natural := 2*4; -- module's address space size in bytes
+  constant plam_in_addr_c    : std_ulogic_vector(data_width_c-1 downto 0) := x"ffffffc0";
+  constant plam_out_addr_c   : std_ulogic_vector(data_width_c-1 downto 0) := x"ffffffc4";
+
   -- Secondary Universal Asynchronous Receiver/Transmitter (UART1) --
   constant uart1_base_c         : std_ulogic_vector(data_width_c-1 downto 0) := x"ffffffd0"; -- base address
   constant uart1_size_c         : natural := 2*4; -- module's address space size in bytes
@@ -940,6 +946,7 @@ package neorv32_package is
       XIRQ_TRIGGER_POLARITY        : std_ulogic_vector(31 downto 0) := x"FFFFFFFF"; -- trigger polarity: 0=low-level/falling-edge, 1=high-level/rising-edge
       -- Processor peripherals --
       IO_GPIO_EN                   : boolean := false;  -- implement general purpose input/output port unit (GPIO)?
+      IO_PLAM_EN                   : boolean := false;  -- implement general purpose input/output port unit (PLAM)?
       IO_MTIME_EN                  : boolean := false;  -- implement machine system timer (MTIME)?
       IO_UART0_EN                  : boolean := false;  -- implement primary universal asynchronous receiver/transmitter (UART0)?
       IO_UART1_EN                  : boolean := false;  -- implement secondary universal asynchronous receiver/transmitter (UART1)?
@@ -991,6 +998,9 @@ package neorv32_package is
       -- GPIO (available if IO_GPIO_EN = true) --
       gpio_o         : out std_ulogic_vector(63 downto 0); -- parallel output
       gpio_i         : in  std_ulogic_vector(63 downto 0) := (others => 'U'); -- parallel input
+      -- PLAM (available if IO_PLAM_EN = true) --
+      plam_o         : out std_ulogic_vector(63 downto 0); -- parallel output
+      plam_i         : in  std_ulogic_vector(63 downto 0) := (others => 'U'); -- parallel input
       -- primary UART0 (available if IO_UART0_EN = true) --
       uart0_txd_o    : out std_ulogic; -- UART0 send data
       uart0_rxd_i    : in  std_ulogic := 'U'; -- UART0 receive data
@@ -1590,6 +1600,24 @@ package neorv32_package is
     );
   end component;
 
+    -- Component: General Purpose Input/Output Port (PLAM) ------------------------------------
+  -- -------------------------------------------------------------------------------------------
+  component neorv32_plam
+    port (
+      -- host access --
+      clk_i  : in  std_ulogic; -- global clock line
+      addr_i : in  std_ulogic_vector(31 downto 0); -- address
+      rden_i : in  std_ulogic; -- read enable
+      wren_i : in  std_ulogic; -- write enable
+      data_i : in  std_ulogic_vector(31 downto 0); -- data in
+      data_o : out std_ulogic_vector(31 downto 0); -- data out
+      ack_o  : out std_ulogic; -- transfer acknowledge
+      -- parallel io --
+      plam_o : out std_ulogic_vector(63 downto 0);
+      plam_i : in  std_ulogic_vector(63 downto 0)
+    );
+  end component;
+
   -- Component: Watchdog Timer (WDT) --------------------------------------------------------
   -- -------------------------------------------------------------------------------------------
   component neorv32_wdt
@@ -1925,6 +1953,7 @@ package neorv32_package is
       ON_CHIP_DEBUGGER_EN          : boolean; -- implement OCD?
       -- Processor peripherals --
       IO_GPIO_EN                   : boolean; -- implement general purpose input/output port unit (GPIO)?
+      IO_PLAM_EN                   : boolean; -- implement general purpose input/output port unit (PLAM)?
       IO_MTIME_EN                  : boolean; -- implement machine system timer (MTIME)?
       IO_UART0_EN                  : boolean; -- implement primary universal asynchronous receiver/transmitter (UART0)?
       IO_UART1_EN                  : boolean; -- implement secondary universal asynchronous receiver/transmitter (UART1)?

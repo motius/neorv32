@@ -51,13 +51,16 @@ entity neorv32_test_setup_approm is
     clk_i       : in  std_ulogic; -- global clock, rising edge
     rstn_i      : in  std_ulogic; -- global reset, low-active, async
     -- GPIO --
-    gpio_o      : out std_ulogic_vector(7 downto 0) -- parallel output
+    gpio_o      : out std_ulogic_vector(7 downto 0); -- parallel output
+    -- PLAM --
+    plam_o      : out std_ulogic_vector(7 downto 0) -- parallel output
   );
 end entity;
 
 architecture neorv32_test_setup_approm_rtl of neorv32_test_setup_approm is
 
   signal con_gpio_o : std_ulogic_vector(63 downto 0);
+  signal con_plam_o : std_ulogic_vector(63 downto 0);
 
 begin
 
@@ -80,6 +83,7 @@ begin
     MEM_INT_DMEM_SIZE            => MEM_INT_DMEM_SIZE, -- size of processor-internal data memory in bytes
     -- Processor peripherals --
     IO_GPIO_EN                   => true,              -- implement general purpose input/output port unit (GPIO)?
+    IO_PLAM_EN                   => true,              -- implement general purpose input/output port unit (PLAM)?
     IO_MTIME_EN                  => true               -- implement machine system timer (MTIME)?
   )
   port map (
@@ -87,11 +91,13 @@ begin
     clk_i  => clk_i,     -- global clock, rising edge
     rstn_i => rstn_i,    -- global reset, low-active, async
     -- GPIO (available if IO_GPIO_EN = true) --
-    gpio_o => con_gpio_o -- parallel output
+    gpio_o => con_gpio_o, -- parallel output
+    -- PLAM (available if IO_PLAM_EN = true) --
+    plam_o => con_plam_o -- parallel output
   );
 
-  -- GPIO output --
-  gpio_o <= con_gpio_o(7 downto 0);
+  -- PLAM output --
+  plam_o <= con_plam_o(7 downto 0);
 
 
 end architecture;

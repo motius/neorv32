@@ -32,17 +32,15 @@
 // # The NEORV32 Processor - https://github.com/stnolting/neorv32              (c) Stephan Nolting #
 // #################################################################################################
 
-
-/**********************************************************************//**
+/**********************************************************************/ /**
  * @file blink_led/main.c
  * @author Stephan Nolting
- * @brief Simple blinking LED demo program using the lowest 8 bits of the GPIO.output port.
+ * @brief Simple blinking LED demo program using the lowest 8 bits of the plam.output port.
  **************************************************************************/
 
 #include <neorv32.h>
 
-
-/**********************************************************************//**
+/**********************************************************************/ /**
  * @name User configuration
  **************************************************************************/
 /**@{*/
@@ -52,70 +50,48 @@
 //#define USE_ASM_VERSION
 /**@}*/
 
-
-/**********************************************************************//**
- * ASM function to blink LEDs
- **************************************************************************/
-extern void blink_led_asm(uint32_t gpio_out_addr);
-
-/**********************************************************************//**
+/**********************************************************************/ /**
  * C function to blink LEDs
  **************************************************************************/
-void blink_led_c(void);
+void do_stuff(uint32_t i);
 
-
-/**********************************************************************//**
- * Main function; shows an incrementing 8-bit counter on GPIO.output(7:0).
+/**********************************************************************/ /**
+ * Main function; shows an incrementing 8-bit counter on plam.output(7:0).
  *
- * @note This program requires the GPIO controller to be synthesized (the UART is optional).
+ * @note This program requires the plam controller to be synthesized (the UART is optional).
  *
  * @return 0 if execution was successful
  **************************************************************************/
-int main() {
+int main()
+{
 
   // init UART (primary UART = UART0; if no id number is specified the primary UART is used) at default baud rate, no parity bits, ho hw flow control
   neorv32_uart_setup(BAUD_RATE, PARITY_NONE, FLOW_CONTROL_NONE);
 
-  // check if GPIO unit is implemented at all
-  if (neorv32_gpio_available() == 0) {
-    neorv32_uart_print("Error! No GPIO unit synthesized!\n");
-    return 1; // nope, no GPIO unit synthesized
+  // check if plam unit is implemented at all
+  if (neorv32_plam_available() == 0)
+  {
+    neorv32_uart_print("Error! No plam unit synthesized!\n");
+    return 1; // nope, no plam unit synthesized
   }
 
   // capture all exceptions and give debug info via UART
   // this is not required, but keeps us safe
   neorv32_rte_setup();
 
-  // say hello
-  neorv32_uart_print("Blinking LED demo program\n");
+  neorv32_plam_port_set(0);
 
+  do_stuff(1); // expetecd: #11
+  do_stuff(2); // expected: #22
+  do_stuff(3); // expected: #33
 
-// use ASM version of LED blinking (file: blink_led_in_asm.S)
-#ifdef USE_ASM_VERSION
-
-  blink_led_asm((uint32_t)(&GPIO_OUTPUT));
-
-// use C version of LED blinking
-#else
-
-  blink_led_c();
-
-#endif
   return 0;
 }
 
-
-/**********************************************************************//**
- * C-version of blinky LED counter
- **************************************************************************/
-void blink_led_c(void) {
-
-  neorv32_gpio_port_set(0); // clear gpio output
-
-  int cnt = 0;
-
-  while (1) {
-    neorv32_gpio_port_set(cnt++ & 0xFF); // increment counter and mask for lowest 8 bit
-    neorv32_cpu_delay_ms(200); // wait 200ms using busy wait
-  }
+void do_stuff(uint32_t i)
+{
+  neorv32_uart_printf("#");
+  neorv32_plam_port_set(i);
+  neorv32_uart_printf("%u", i);
+  neorv32_uart_printf("%u", neorv32_plam_port_get());
 }

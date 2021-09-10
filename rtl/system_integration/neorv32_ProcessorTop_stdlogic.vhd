@@ -95,6 +95,7 @@ entity neorv32_ProcessorTop_stdlogic is
     XIRQ_TRIGGER_POLARITY        : std_logic_vector(31 downto 0) := (others => '1'); -- trigger polarity: 0=low-level/falling-edge, 1=high-level/rising-edge
     -- Processor peripherals --
     IO_GPIO_EN                   : boolean := true;   -- implement general purpose input/output port unit (GPIO)?
+    IO_PLAM_EN                   : boolean := true;   -- implement general purpose input/output port unit (PLAM)?
     IO_MTIME_EN                  : boolean := true;   -- implement machine system timer (MTIME)?
     IO_UART0_EN                  : boolean := true;   -- implement primary universal asynchronous receiver/transmitter (UART0)?
     IO_UART1_EN                  : boolean := true;   -- implement secondary universal asynchronous receiver/transmitter (UART1)?
@@ -145,6 +146,9 @@ entity neorv32_ProcessorTop_stdlogic is
     -- GPIO (available if IO_GPIO_EN = true) --
     gpio_o         : out std_logic_vector(63 downto 0); -- parallel output
     gpio_i         : in  std_logic_vector(63 downto 0) := (others => '0'); -- parallel input
+    -- PLAM (available if IO_PLAM_EN = true) --
+    plam_o         : out std_logic_vector(63 downto 0); -- parallel output
+    plam_i         : in  std_logic_vector(63 downto 0) := (others => '0'); -- parallel input
     -- primary UART0 (available if IO_UART0_EN = true) --
     uart0_txd_o    : out std_logic; -- UART0 send data
     uart0_rxd_i    : in  std_logic := '0'; -- UART0 receive data
@@ -223,6 +227,9 @@ architecture neorv32_ProcessorTop_stdlogic_rtl of neorv32_ProcessorTop_stdlogic 
   --
   signal gpio_o_int      : std_ulogic_vector(63 downto 0);
   signal gpio_i_int      : std_ulogic_vector(63 downto 0);
+  --
+  signal plam_o_int      : std_ulogic_vector(63 downto 0);
+  signal plam_i_int      : std_ulogic_vector(63 downto 0);
   --
   signal uart0_txd_o_int : std_ulogic;
   signal uart0_rxd_i_int : std_ulogic;
@@ -316,6 +323,7 @@ begin
     XIRQ_TRIGGER_POLARITY        => XIRQ_TRIGGER_POLARITY_INT, -- trigger polarity: 0=low-level/falling-edge, 1=high-level/rising-edge
     -- Processor peripherals --
     IO_GPIO_EN                   => IO_GPIO_EN,         -- implement general purpose input/output port unit (GPIO)?
+    IO_PLAM_EN                   => IO_PLAM_EN,         -- implement general purpose input/output port unit (PLAM)?
     IO_MTIME_EN                  => IO_MTIME_EN,        -- implement machine system timer (MTIME)?
     IO_UART0_EN                  => IO_UART0_EN,        -- implement primary universal asynchronous receiver/transmitter (UART0)?
     IO_UART1_EN                  => IO_UART1_EN,        -- implement secondary universal asynchronous receiver/transmitter (UART1)?
@@ -366,6 +374,9 @@ begin
     -- GPIO (available if IO_GPIO_EN = true) --
     gpio_o         => gpio_o_int,      -- parallel output
     gpio_i         => gpio_i_int,      -- parallel input
+    -- PLAM (available if IO_PLAM_EN = true) --
+    plam_o         => plam_o_int,      -- parallel output
+    plam_i         => plam_i_int,      -- parallel input
     -- primary UART0 (available if IO_UART0_EN = true) --
     uart0_txd_o    => uart0_txd_o_int, -- UART0 send data
     uart0_rxd_i    => uart0_rxd_i_int, -- UART0 receive data
@@ -441,6 +452,9 @@ begin
 
   gpio_o          <= std_logic_vector(gpio_o_int);
   gpio_i_int      <= std_ulogic_vector(gpio_i);
+
+  plam_o          <= std_logic_vector(plam_o_int);
+  plam_i_int      <= std_ulogic_vector(plam_i);
 
   uart0_txd_o     <= std_logic(uart0_txd_o_int);
   uart0_rxd_i_int <= std_ulogic(uart0_rxd_i);

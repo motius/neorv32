@@ -1034,6 +1034,20 @@ enum NEORV32_WDT_CT_enum {
 #define GPIO_OUTPUT (*(IO_REG64 (&GPIO_OUTPUT_LO)))
 /**@}*/
 
+/**********************************************************************//**
+ * @name IO Device: General Purpose Input/Output Port Unit (PLAM)
+ **************************************************************************/
+/**@{*/
+/** PLAM base address */
+#define PLAM_BASE (0xFFFFFFC0UL) // /**< PLAM base address */
+/** PLAM address space size in bytes */
+#define PLAM_SIZE (2*4) // /**< PLAM address space size in bytes */
+
+/** PLAM parallel input port lower 32-bit (r/-) */
+#define PLAM_INPUT  (*(IO_REG32 (PLAM_BASE +  0)))
+/** PLAM parallel output port lower 32-bit (r/w) */
+#define PLAM_OUTPUT (*(IO_ROM32 (PLAM_BASE +  4)))
+/**@}*/
 
 /**********************************************************************//**
  * @name IO Device: Smart LED Hardware Interface (NEOLED)
@@ -1161,7 +1175,8 @@ enum NEORV32_SYSINFO_FEATURES_enum {
   SYSINFO_FEATURES_IO_SLINK         = 25, /**< SYSINFO_FEATURES (25) (r/-): Stream link interface implemented when 1 (via SLINK_NUM_RX & SLINK_NUM_TX generics) */
   SYSINFO_FEATURES_IO_UART1         = 26, /**< SYSINFO_FEATURES (26) (r/-): Secondary universal asynchronous receiver/transmitter 1 implemented when 1 (via IO_UART1_EN generic) */
   SYSINFO_FEATURES_IO_NEOLED        = 27, /**< SYSINFO_FEATURES (27) (r/-): NeoPixel-compatible smart LED interface implemented when 1 (via IO_NEOLED_EN generic) */
-  SYSINFO_FEATURES_IO_XIRQ          = 28  /**< SYSINFO_FEATURES (28) (r/-): External interrupt controller implemented when 1 (via XIRQ_NUM_IO generic) */
+  SYSINFO_FEATURES_IO_XIRQ          = 28, /**< SYSINFO_FEATURES (28) (r/-): External interrupt controller implemented when 1 (via XIRQ_NUM_IO generic) */
+  SYSINFO_FEATURES_IO_PLAM          = 29  /**< SYSINFO_FEATURES (16) (r/-): General purpose input/output port unit implemented when 1 (via IO_PLAM_EN generic) */
 };
 
 /**********************************************************************//**
@@ -1205,6 +1220,7 @@ enum NEORV32_SYSINFO_FEATURES_enum {
 // io/peripheral devices
 #include "neorv32_cfs.h"
 #include "neorv32_gpio.h"
+#include "neorv32_plam.h"
 #include "neorv32_mtime.h"
 #include "neorv32_neoled.h"
 #include "neorv32_pwm.h"

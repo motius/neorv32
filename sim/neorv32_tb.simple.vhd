@@ -109,6 +109,9 @@ architecture neorv32_tb_simple_rtl of neorv32_tb_simple is
   -- gpio --
   signal gpio : std_ulogic_vector(63 downto 0);
 
+  -- plam --
+  signal plam : std_ulogic_vector(63 downto 0);
+
   -- twi --
   signal twi_scl, twi_sda : std_logic;
 
@@ -220,6 +223,7 @@ begin
     XIRQ_TRIGGER_POLARITY        => (others => '1'), -- trigger polarity: 0=low-level/falling-edge, 1=high-level/rising-edge
     -- Processor peripherals --
     IO_GPIO_EN                   => true,          -- implement general purpose input/output port unit (GPIO)?
+    IO_PLAM_EN                   => true,          -- implement general purpose input/output port unit (PLAM)?
     IO_MTIME_EN                  => true,          -- implement machine system timer (MTIME)?
     IO_UART0_EN                  => true,          -- implement primary universal asynchronous receiver/transmitter (UART0)?
     IO_UART1_EN                  => true,          -- implement secondary universal asynchronous receiver/transmitter (UART1)?
@@ -270,6 +274,9 @@ begin
     -- GPIO (available if IO_GPIO_EN = true) --
     gpio_o         => gpio,            -- parallel output
     gpio_i         => gpio,            -- parallel input
+    -- PLAM (available if IO_PLAM_EN = true) --
+    plam_o         => plam,            -- parallel output
+    plam_i         => plam,            -- parallel input
     -- primary UART0 (available if IO_UART0_EN = true) --
     uart0_txd_o    => uart0_txd,       -- UART0 send data
     uart0_rxd_i    => uart0_txd,       -- UART0 receive data

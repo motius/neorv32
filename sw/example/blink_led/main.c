@@ -93,5 +93,6 @@ void do_stuff(uint32_t i)
   neorv32_uart_printf("#");
   neorv32_plam_port_set(i);
   neorv32_uart_printf("%u", i);
+  neorv32_uart_printf("%u", PLAM_INPUT);
   neorv32_uart_printf("%u", neorv32_plam_port_get());
 }

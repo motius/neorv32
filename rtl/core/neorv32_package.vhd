@@ -137,7 +137,7 @@ package neorv32_package is
 
   -- Custom Functions Subsystem (CFS) --
   constant cfs_base_c           : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe00"; -- base address
-  constant cfs_size_c           : natural := 32*4; -- module's address space in bytes
+  constant cfs_size_c           : natural := 30*4; -- module's address space in bytes
   constant cfs_reg0_addr_c      : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe00";
   constant cfs_reg1_addr_c      : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe04";
   constant cfs_reg2_addr_c      : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe08";
@@ -168,8 +168,12 @@ package neorv32_package is
   constant cfs_reg27_addr_c     : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe6c";
   constant cfs_reg28_addr_c     : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe70";
   constant cfs_reg29_addr_c     : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe74";
-  constant cfs_reg30_addr_c     : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe78";
-  constant cfs_reg31_addr_c     : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe7c";
+  
+  --  Cyclic Redundancy Check (CRC32) -- 
+  constant crc32_base_c         : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe78"; -- base address
+  constant crc32_size_c         : natural := 2*4; -- module's address space in bytes
+  constant crc32_in_addr_c      : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe78";
+  constant crc32_out_addr_c     : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe7c";
 
   -- Pulse-Width Modulation Controller (PWM) --
   constant pwm_base_c           : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe80"; -- base address
@@ -954,7 +958,8 @@ package neorv32_package is
       IO_CFS_IN_SIZE               : positive := 32;    -- size of CFS input conduit in bits
       IO_CFS_OUT_SIZE              : positive := 32;    -- size of CFS output conduit in bits
       IO_NEOLED_EN                 : boolean := false;  -- implement NeoPixel-compatible smart LED interface (NEOLED)?
-      IO_NEOLED_TX_FIFO            : natural := 1       -- NEOLED TX FIFO depth, 1..32k, has to be a power of two
+      IO_NEOLED_TX_FIFO            : natural := 1;      -- NEOLED TX FIFO depth, 1..32k, has to be a power of two
+      IO_CRC32_EN                   : boolean := false   -- implement Cyclic Redundancy Check (CRC32)?
     );
     port (
       -- Global control --
@@ -1015,6 +1020,9 @@ package neorv32_package is
       -- Custom Functions Subsystem IO --
       cfs_in_i       : in  std_ulogic_vector(IO_CFS_IN_SIZE-1  downto 0) := (others => 'U'); -- custom CFS inputs conduit
       cfs_out_o      : out std_ulogic_vector(IO_CFS_OUT_SIZE-1 downto 0); -- custom CFS outputs conduit
+      -- Cyclic Redundancy Check (CRC32) IO  --
+      crc32_in_i    : in  std_ulogic_vector(31 downto 0); -- crc32 inputs
+      crc32_out_o   : out std_ulogic_vector(31 downto 0); -- crc32 outputs
       -- NeoPixel-compatible smart LED interface (available if IO_NEOLED_EN = true) --
       neoled_o       : out std_ulogic; -- async serial data line
       -- System time --
@@ -1809,6 +1817,26 @@ package neorv32_package is
       cfs_out_o   : out std_ulogic_vector(CFS_OUT_SIZE-1 downto 0) -- custom outputs
     );
   end component;
+  
+  
+  -- Component: Cyclic Redundancy Check (CRC32) --------------------------------------------
+  -- -------------------------------------------------------------------------------------------
+  component neorv32_crc32
+    port (
+      -- host access --
+      clk_i       : in  std_ulogic; -- global clock line
+      rstn_i      : in  std_ulogic; -- global reset line, low-active, use as async
+      addr_i      : in  std_ulogic_vector(31 downto 0); -- address
+      rden_i      : in  std_ulogic; -- read enable
+      wren_i      : in  std_ulogic; -- word write enable
+      data_i      : in  std_ulogic_vector(31 downto 0); -- data in
+      data_o      : out std_ulogic_vector(31 downto 0); -- data out
+      ack_o       : out std_ulogic; -- transfer acknowledge
+      -- custom io (conduit) --
+      crc32_in_i    : in  std_ulogic_vector(31 downto 0); -- custom inputs
+      crc32_out_o   : out std_ulogic_vector(31 downto 0) -- custom outputs
+    );
+  end component;
 
   -- Component: Smart LED (WS2811/WS2812) Interface (NEOLED) --------------------------------
   -- -------------------------------------------------------------------------------------------
@@ -1942,7 +1970,8 @@ package neorv32_package is
       IO_CFS_EN                    : boolean; -- implement custom functions subsystem (CFS)?
       IO_SLINK_EN                  : boolean; -- implement stream link interface?
       IO_NEOLED_EN                 : boolean; -- implement NeoPixel-compatible smart LED interface (NEOLED)?
-      IO_XIRQ_NUM_CH               : natural  -- number of external interrupt (XIRQ) channels to implement
+      IO_XIRQ_NUM_CH               : natural; -- number of external interrupt (XIRQ) channels to implement
+      IO_CRC32_EN                  : boolean  -- implement Cyclic Redundancy Check (CRC32)?
     );
     port (
       -- host access --

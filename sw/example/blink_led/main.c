@@ -117,5 +117,7 @@ void blink_led_c(void) {
   while (1) {
     neorv32_gpio_port_set(cnt++ & 0xFF); // increment counter and mask for lowest 8 bit
     neorv32_cpu_delay_ms(200); // wait 200ms using busy wait
+    const char *sentence = "This is a Test text!";
+    neorv32_uart0_printf("%s -> CRC-32: Ox%x \n", sentence ,neorv32_crc32(sentence));
   }
 }

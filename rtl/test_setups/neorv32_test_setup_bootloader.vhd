@@ -54,13 +54,17 @@ entity neorv32_test_setup_bootloader is
     gpio_o      : out std_ulogic_vector(7 downto 0); -- parallel output
     -- UART0 --
     uart0_txd_o : out std_ulogic; -- UART0 send data
-    uart0_rxd_i : in  std_ulogic  -- UART0 receive data
+    uart0_rxd_i : in  std_ulogic;  -- UART0 receive data
+    -- CRC32 --
+    crc32_in_i    : in  std_ulogic_vector(31 downto 0); -- crc32 inputs
+    crc32_out_o   : out std_ulogic_vector(7 downto 0) -- crc32 outputs  (just 8-bits) to be displayed on the leds
   );
 end entity;
 
 architecture neorv32_test_setup_bootloader_rtl of neorv32_test_setup_bootloader is
 
   signal con_gpio_o : std_ulogic_vector(63 downto 0);
+  signal con_crc32_o : std_ulogic_vector(31 downto 0);
 
 begin
 
@@ -84,7 +88,8 @@ begin
     -- Processor peripherals --
     IO_GPIO_EN                   => true,              -- implement general purpose input/output port unit (GPIO)?
     IO_MTIME_EN                  => true,              -- implement machine system timer (MTIME)?
-    IO_UART0_EN                  => true               -- implement primary universal asynchronous receiver/transmitter (UART0)?
+    IO_UART0_EN                  => true,              -- implement primary universal asynchronous receiver/transmitter (UART0)?
+    IO_CRC32_EN                  => true               -- implement Cyclic Redundancy Check (CRC32)?
   )
   port map (
     -- Global control --
@@ -94,11 +99,16 @@ begin
     gpio_o      => con_gpio_o,  -- parallel output
     -- primary UART0 (available if IO_UART0_EN = true) --
     uart0_txd_o => uart0_txd_o, -- UART0 send data
-    uart0_rxd_i => uart0_rxd_i  -- UART0 receive data
+    uart0_rxd_i => uart0_rxd_i, -- UART0 receive data
+    -- CRC32
+    crc32_in_i    => crc32_in_i,
+    crc32_out_o   => con_crc32_o
   );
 
   -- GPIO output --
   gpio_o <= con_gpio_o(7 downto 0);
+  -- CRC32 output --
+  crc32_out_o <= con_crc32_o(7 downto 0);
 
 
 end architecture;

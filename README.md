@@ -2,8 +2,8 @@
 
 * [Overview](#Overview)
 * [Introduction](#Introduction)
-* [Cyclic Redundancy Check (CRC32)](#Cyclic-Redundancy-Check-(CRC32))
-  * [Custom Functions Subsystem (CFS)](#Custom-Functions-Subsystem-(CFS))
+* [Cyclic Redundancy Check (CRC32)](#cyclic-redundancy-check-crc32)
+  * [Custom Functions Subsystem (CFS)](#custom-functions-subsystem-cfs)
   * [Files to be modified](#Files-to-be-modified)
   * [Test Example - Software](#Test-Example---Software)
 

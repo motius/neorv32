@@ -91,7 +91,8 @@ entity neorv32_sysinfo is
     IO_CFS_EN                    : boolean; -- implement custom functions subsystem (CFS)?
     IO_SLINK_EN                  : boolean; -- implement stream link interface?
     IO_NEOLED_EN                 : boolean; -- implement NeoPixel-compatible smart LED interface (NEOLED)?
-    IO_XIRQ_NUM_CH               : natural  -- number of external interrupt (XIRQ) channels to implement
+    IO_XIRQ_NUM_CH               : natural;  -- number of external interrupt (XIRQ) channels to implement
+    IO_CRC32_EN                   : boolean -- implement Cyclic Redundancy Check (CRC32)?
   );
   port (
     -- host access --
@@ -181,8 +182,9 @@ begin
   sysinfo_mem(2)(26) <= bool_to_ulogic_f(IO_UART1_EN);  -- secondary universal asynchronous receiver/transmitter (UART1) implemented?
   sysinfo_mem(2)(27) <= bool_to_ulogic_f(IO_NEOLED_EN); -- NeoPixel-compatible smart LED interface (NEOLED) implemented?
   sysinfo_mem(2)(28) <= bool_to_ulogic_f(boolean(IO_XIRQ_NUM_CH > 0)); -- external interrupt controller (XIRQ) implemented?
+  sysinfo_mem(2)(29) <= bool_to_ulogic_f(IO_CRC32_EN);   -- Cyclic Redundancy Check (CRC32) implemented?
   --
-  sysinfo_mem(2)(31 downto 29) <= (others => '0'); -- reserved
+  sysinfo_mem(2)(31 downto 30) <= (others => '0'); -- reserved
 
   -- SYSINFO(3): Cache configuration --
   sysinfo_mem(3)(03 downto 00) <= std_ulogic_vector(to_unsigned(index_size_f(ICACHE_BLOCK_SIZE),    4)) when (ICACHE_EN = true) else (others => '0'); -- i-cache: log2(block_size_in_bytes)

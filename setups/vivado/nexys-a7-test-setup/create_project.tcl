@@ -1,4 +1,4 @@
-set board "A7-50"
+set board "A7-100"
 
 # create and clear output directory
 set outputdir work

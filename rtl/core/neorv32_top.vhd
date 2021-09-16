@@ -131,7 +131,8 @@ entity neorv32_top is
     IO_CFS_IN_SIZE               : positive := 32;    -- size of CFS input conduit in bits
     IO_CFS_OUT_SIZE              : positive := 32;    -- size of CFS output conduit in bits
     IO_NEOLED_EN                 : boolean := false;  -- implement NeoPixel-compatible smart LED interface (NEOLED)?
-    IO_NEOLED_TX_FIFO            : natural := 1       -- NEOLED TX FIFO depth, 1..32k, has to be a power of two
+    IO_NEOLED_TX_FIFO            : natural := 1;      -- NEOLED TX FIFO depth, 1..32k, has to be a power of two
+    IO_CRC32_EN                   : boolean := false   -- implement Cyclic Redundancy Check (CRC32)?
   );
   port (
     -- Global control --
@@ -204,6 +205,10 @@ entity neorv32_top is
     -- Custom Functions Subsystem IO (available if IO_CFS_EN = true) --
     cfs_in_i       : in  std_ulogic_vector(IO_CFS_IN_SIZE-1  downto 0) := (others => 'U'); -- custom CFS inputs conduit
     cfs_out_o      : out std_ulogic_vector(IO_CFS_OUT_SIZE-1 downto 0); -- custom CFS outputs conduit
+    
+    -- Cyclic Redundancy Check (CRC32) IO (available if IO_CRC32_EN = true) --
+    crc32_in_i    : in  std_ulogic_vector(31 downto 0); -- crc32 inputs
+    crc32_out_o   : out std_ulogic_vector(31 downto 0); -- crc32 outputs
 
     -- NeoPixel-compatible smart LED interface (available if IO_NEOLED_EN = true) --
     neoled_o       : out std_ulogic; -- async serial data line
@@ -307,7 +312,7 @@ architecture neorv32_top_rtl of neorv32_top is
 
   -- module response bus - device ID --
   type resp_bus_id_t is (RESP_IMEM, RESP_DMEM, RESP_BOOTROM, RESP_WISHBONE, RESP_GPIO, RESP_MTIME, RESP_UART0, RESP_UART1, RESP_SPI,
-                         RESP_TWI, RESP_PWM, RESP_WDT, RESP_TRNG, RESP_CFS, RESP_NEOLED, RESP_SYSINFO, RESP_OCD, RESP_SLINK, RESP_XIRQ);
+                         RESP_TWI, RESP_PWM, RESP_WDT, RESP_TRNG, RESP_CFS, RESP_CRC32, RESP_NEOLED, RESP_SYSINFO, RESP_OCD, RESP_SLINK, RESP_XIRQ);
 
   -- module response bus --
   type resp_bus_t is array (resp_bus_id_t) of resp_bus_entry_t;
@@ -356,6 +361,7 @@ begin
   cond_sel_string_f(IO_WDT_EN, "WDT ", "") &
   cond_sel_string_f(IO_TRNG_EN, "TRNG ", "") &
   cond_sel_string_f(IO_CFS_EN, "CFS ", "") &
+  cond_sel_string_f(IO_CRC32_EN, "CRC32 ", "") &
   cond_sel_string_f(io_slink_en_c, "SLINK ", "") &
   cond_sel_string_f(IO_NEOLED_EN, "NEOLED ", "") &
   cond_sel_string_f(boolean(XIRQ_NUM_CH > 0), "XIRQ ", "") &
@@ -906,6 +912,34 @@ begin
     cfs_out_o <= (others => '0');
   end generate;
 
+  -- Cyclic Redundancy Check (CRC32) -------------------------------------------------------
+  -- -------------------------------------------------------------------------------------------
+  neorv32_crc32_inst_true:
+  if (IO_CRC32_EN = true) generate
+    neorv32_crc32_inst: neorv32_crc32
+    port map (
+      -- host access --
+      clk_i       => clk_i,                    -- global clock line
+      rstn_i      => sys_rstn,                 -- global reset line, low-active, use as async
+      addr_i      => p_bus.addr,               -- address
+      rden_i      => io_rden,                  -- read enable
+      wren_i      => io_wren,                  -- byte write enable
+      data_i      => p_bus.wdata,              -- data in
+      data_o      => resp_bus(RESP_CRC32).rdata, -- data out
+      ack_o       => resp_bus(RESP_CRC32).ack,   -- transfer acknowledge
+    -- CRC32 IO  --
+      crc32_in_i    => crc32_in_i,                 -- crc32 inputs
+      crc32_out_o   => crc32_out_o                 -- crc32 outputs
+    );
+    resp_bus(RESP_CRC32).err <= '0'; -- no access error possible
+  end generate;
+
+  neorv32_crc32_inst_false:
+  if (IO_CRC32_EN = false) generate
+    resp_bus(RESP_CRC32) <= resp_bus_entry_terminate_c;
+    crc32_out_o <= (others => '0');
+  end generate;
+
 
   -- General Purpose Input/Output Port (GPIO) -----------------------------------------------
   -- -------------------------------------------------------------------------------------------
@@ -1408,7 +1442,8 @@ begin
     IO_CFS_EN                    => IO_CFS_EN,            -- implement custom functions subsystem (CFS)?
     IO_SLINK_EN                  => io_slink_en_c,        -- implement stream link interface?
     IO_NEOLED_EN                 => IO_NEOLED_EN,         -- implement NeoPixel-compatible smart LED interface (NEOLED)?
-    IO_XIRQ_NUM_CH               => XIRQ_NUM_CH           -- number of external interrupt (XIRQ) channels to implement
+    IO_XIRQ_NUM_CH               => XIRQ_NUM_CH,          -- number of external interrupt (XIRQ) channels to implement
+    IO_CRC32_EN                  => IO_CRC32_EN           -- implement Cyclic Redundancy Check (CRC32)?
   )
   port map (
     -- host access --

@@ -280,7 +280,10 @@ enum NEORV32_CSR_MSTATUS_enum {
   CSR_MSTATUS_MPIE  =  7, /**< CPU mstatus CSR  (7): MPIE - Machine previous interrupt enable bit (r/w) */
   CSR_MSTATUS_MPP_L = 11, /**< CPU mstatus CSR (11): MPP_L - Machine previous privilege mode bit low (r/w) */
   CSR_MSTATUS_MPP_H = 12, /**< CPU mstatus CSR (12): MPP_H - Machine previous privilege mode bit high (r/w) */
+  CSR_MSTATUS_FS_L  = 13, /**< CPU mstatus CSR (13): FS_L - FPU state bit low (r/w) */
+  CSR_MSTATUS_FS_H  = 14, /**< CPU mstatus CSR (14): FS_H - FPU state bit high (r/w) */
   CSR_MSTATUS_TW    = 21, /**< CPU mstatus CSR (21): TW - timeout wait (trigger illegal instruction exception if WFI is executed outside of m-mode when set) (r/w) */
+  CSR_MSTATUS_SD    = 31  /**< CPU mstatus CSR (31): SD - extension's state summary (set = non-clean) (r/-) */
 };
 
 
@@ -539,7 +542,7 @@ enum NEORV32_CLOCK_PRSC_enum {
 /** CFS base address */
 #define CFS_BASE (0xFFFFFE00UL) // /**< CFS base address */
 /** CFS address space size in bytes */
-#define CFS_SIZE (64*4) // /**< CFS address space size in bytes */
+#define CFS_SIZE (30*4) // /**< CFS address space size in bytes */
 
 /** custom CFS register 0 */
 #define CFS_REG_0  (*(IO_REG32 (CFS_BASE + 0))) // /**< (r)/(w): CFS register 0, user-defined */
@@ -601,10 +604,22 @@ enum NEORV32_CLOCK_PRSC_enum {
 #define CFS_REG_28 (*(IO_REG32 (CFS_BASE + 112))) // /**< (r)/(w): CFS register 28, user-defined */
 /** custom CFS register 29 */
 #define CFS_REG_29 (*(IO_REG32 (CFS_BASE + 116))) // /**< (r)/(w): CFS register 29, user-defined */
-/** custom CFS register 30 */
-#define CFS_REG_30 (*(IO_REG32 (CFS_BASE + 120))) // /**< (r)/(w): CFS register 30, user-defined */
-/** custom CFS register 31 */
-#define CFS_REG_31 (*(IO_REG32 (CFS_BASE + 124))) // /**< (r)/(w): CFS register 31, user-defined */
+/**@}*/
+
+
+/**********************************************************************//**
+ * @name IO Device: Cyclic Redundancy Check (CRC32)
+ **************************************************************************/
+/**@{*/
+/** CRC32 base address */
+#define CRC32_BASE (0xFFFFFE78UL) // /**< CRC32 base address */
+/** CRC32 address space size in bytes */
+#define CRC32_SIZE (2*4) // /**< CRC32 address space size in bytes */
+
+/** CRC32 input register (r/w) */
+#define CRC32_INPUT (*(IO_REG32 (CRC32_BASE + 0)))
+/** CRC32 output register (r/w) */
+#define CRC32_OUTPUT (*(IO_REG32 (CRC32_BASE + 4)))
 /**@}*/
 
 
@@ -1161,7 +1176,8 @@ enum NEORV32_SYSINFO_FEATURES_enum {
   SYSINFO_FEATURES_IO_SLINK         = 25, /**< SYSINFO_FEATURES (25) (r/-): Stream link interface implemented when 1 (via SLINK_NUM_RX & SLINK_NUM_TX generics) */
   SYSINFO_FEATURES_IO_UART1         = 26, /**< SYSINFO_FEATURES (26) (r/-): Secondary universal asynchronous receiver/transmitter 1 implemented when 1 (via IO_UART1_EN generic) */
   SYSINFO_FEATURES_IO_NEOLED        = 27, /**< SYSINFO_FEATURES (27) (r/-): NeoPixel-compatible smart LED interface implemented when 1 (via IO_NEOLED_EN generic) */
-  SYSINFO_FEATURES_IO_XIRQ          = 28  /**< SYSINFO_FEATURES (28) (r/-): External interrupt controller implemented when 1 (via XIRQ_NUM_IO generic) */
+  SYSINFO_FEATURES_IO_XIRQ          = 28, /**< SYSINFO_FEATURES (28) (r/-): External interrupt controller implemented when 1 (via XIRQ_NUM_IO generic) */
+  SYSINFO_FEATURES_IO_CRC32         = 29  /**< SYSINFO_FEATURES (29) (r/-): Cyclic Redundancy Check (CRC32) */
 };
 
 /**********************************************************************//**
@@ -1204,6 +1220,7 @@ enum NEORV32_SYSINFO_FEATURES_enum {
 
 // io/peripheral devices
 #include "neorv32_cfs.h"
+#include "neorv32_crc32.h"
 #include "neorv32_gpio.h"
 #include "neorv32_mtime.h"
 #include "neorv32_neoled.h"

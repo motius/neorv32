@@ -1,352 +1,627 @@
-[![GitHub Pages](https://img.shields.io/website.svg?label=stnolting.github.io%2Fneorv32&longCache=true&style=flat-square&url=http%3A%2F%2Fstnolting.github.io%2Fneorv32%2Findex.html&logo=GitHub)](https://stnolting.github.io/neorv32)
-[![Documentation](https://img.shields.io/github/workflow/status/stnolting/neorv32/Documentation/master?longCache=true&style=flat-square&label=Documentation&logo=Github%20Actions&logoColor=fff)](https://github.com/stnolting/neorv32/actions?query=workflow%3ADocumentation)
-\
-[![riscv-arch-test](https://img.shields.io/github/workflow/status/stnolting/neorv32/riscv-arch-test/master?longCache=true&style=flat-square&label=riscv-arch-test&logo=Github%20Actions&logoColor=fff)](https://github.com/stnolting/neorv32/actions?query=workflow%3Ariscv-arch-test)
-[![Processor](https://img.shields.io/github/workflow/status/stnolting/neorv32/Processor/master?longCache=true&style=flat-square&label=Processor&logo=Github%20Actions&logoColor=fff)](https://github.com/stnolting/neorv32/actions?query=workflow%3AProcessor)
-[![Implementation](https://img.shields.io/github/workflow/status/stnolting/neorv32/Implementation/master?longCache=true&style=flat-square&label=Implementation&logo=Github%20Actions&logoColor=fff)](https://github.com/stnolting/neorv32/actions?query=workflow%3AImplementation)
-[![Windows](https://img.shields.io/github/workflow/status/stnolting/neorv32/Windows/master?longCache=true&style=flat-square&label=Windows&logo=Github%20Actions&logoColor=fff)](https://github.com/stnolting/neorv32/actions?query=workflow%3AWindows)
-
-[![NEORV32](https://raw.githubusercontent.com/stnolting/neorv32/master/docs/figures/neorv32_logo_dark.png)](https://github.com/stnolting/neorv32)
-
-# The NEORV32 RISC-V Processor
-
-[![license](https://img.shields.io/github/license/stnolting/neorv32?longCache=true&style=flat-square)](https://github.com/stnolting/neorv32/blob/master/LICENSE)
-[![release](https://img.shields.io/github/v/release/stnolting/neorv32?longCache=true&style=flat-square&logo=GitHub)](https://github.com/stnolting/neorv32/releases)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5121427.svg)](https://doi.org/10.5281/zenodo.5121427)
-
-[![datasheet (pdf)](https://img.shields.io/badge/data%20sheet-PDF-ffbd00?longCache=true&style=flat-square&logo=asciidoctor)](https://github.com/stnolting/neorv32/releases/tag/nightly)
-[![datasheet (html)](https://img.shields.io/badge/-HTML-ffbd00?longCache=true&style=flat-square)](https://stnolting.github.io/neorv32)
-[![userguide (pdf)](https://img.shields.io/badge/user%20guide-PDF-ffbd00?longCache=true&style=flat-square&logo=asciidoctor)](https://github.com/stnolting/neorv32/releases/tag/nightly)
-[![userguide (html)](https://img.shields.io/badge/-HTML-ffbd00?longCache=true&style=flat-square)](https://stnolting.github.io/neorv32/ug)
-[![doxygen](https://img.shields.io/badge/doxygen-HTML-ffbd00?longCache=true&style=flat-square&logo=Doxygen)](https://stnolting.github.io/neorv32/sw/files.html)
+# How to add a custom module - Cyclic Redundancy Check (CRC32) - Nexys A7 Board
 
 * [Overview](#Overview)
-* [Processor/SoC Features](#NEORV32-Processor-Features)
-  * [FPGA Implementation Results](#FPGA-Implementation-Results---Processor)
-* [CPU Features](#NEORV32-CPU-Features)
-  * [Available ISA Extensions](#Available-ISA-Extensions)
-  * [FPGA Implementation Results](#FPGA-Implementation-Results---CPU)
-  * [Performance](#Performance)
-* [Software Framework & Tooling](#Software-Framework-and-Tooling)
-* [**Getting Started**](#Getting-Started) :rocket:
-
-
+* [Introduction](#Introduction)
+* [Cyclic Redundancy Check (CRC32)](#cyclic-redundancy-check-crc32)
+  * [Custom Functions Subsystem (CFS)](#custom-functions-subsystem-cfs)
+  * [Files to be modified](#Files-to-be-modified)
+  * [Test Example - Software](#Test-Example---Software)
 
 ## Overview
 
-![neorv32 Overview](https://raw.githubusercontent.com/stnolting/neorv32/master/docs/figures/neorv32_processor.png)
+![neorv32 Overview](./docs/figures/neorv32_processor_custom.png)
+
+Due to the customizable ability of the NEORV32 Processor, here we are going to go through the process of adding a custom module. Here we are going to add a **Cyclic Redundancy Check (CRC32) module** as an example. For this we are going to use the Nexys A7 Board.
+
+## Introduction
+
+After reading the [user guide](https://stnolting.github.io/neorv32/ug/) and having an idea of how the NEORV32 [executes programs](https://stnolting.github.io/neorv32/ug/#_setup_of_a_new_application_program_project), you are ready to put hands on how to add your custom module.
+
+## Cyclic Redundancy Check (CRC32)
+
+In order to implement a custom module, we have to look into the CFS module first.
+
+### Custom Functions Subsystem (CFS)
+
+![Custom Functions Subsystem (CFS)](./docs/figures/neorv32_cfs.png)
+
+The [CFS module](./rtl/core/neorv32_cfs.vhd) provides 32x32-bit memory-mapped registers as an "example/illustrating template" to be modified in the case of implementing design custom logic. So, this is the first module you want to start to play with. In the same way, the CFS module is well commented. Have a read of it before we carry on. 
+
+Also as a rule of thumb, it is good to use the CFS first and test functionality there before you start modifying existing components or adding completely new modules. Due to the simplicity of the CRC32 code, we are going to proceed directly creating the module! You can read more about [the CRC error detection.](https://en.wikipedia.org/wiki/Cyclic_redundancy_check)
+
+Once you have a general idea of the how the CFS is structured, we can duplicate it and modify it to create our CRC32 module.
+
+Now we proceed to create and add to the processor our own CRC32 module called [neorv32_crc32.vhd](./rtl/core/neorv32_crc32.vhd) with our own CRC32 implementation. [Here](./rtl/core/neorv32_crc32.vhd#L121-L165) it is the CRC32 Function Core:
+
+*Note: Please have a look and compare [neorv32_crc32.vhd](./rtl/core/neorv32_crc32.vhd) and [neorv32_cfs.vhd](./rtl/core/neorv32_cfs.vhd) and you will see the similarities!*
+
+```vhdl
+  -- CRC32 Function Core ----------------------------------------------------------------------
+  -- -------------------------------------------------------------------------------------------
+  -- This is where the actual functionality can be implemented.
+  -- In this example we are just implementing four r/w registers that invert any value written to them.
+  -- crc32_reg_wr(0)(7 downto 0) -- 8-bit data
+  -- crc32_reg_wr(1)             -- intemediate Result
+  -- crc32_reg_rd(1)             -- final Result
+     
+  cr32_core: process(crc32_reg_wr(0))
+  begin               
+   
+    crc32_reg_rd(1)(0) <= (crc32_reg_wr(1)(2) xor crc32_reg_wr(1)(8) xor crc32_reg_wr(0)(2));
+    crc32_reg_rd(1)(1) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(3) xor crc32_reg_wr(1)(9) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(3));
+    crc32_reg_rd(1)(2) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(4) xor crc32_reg_wr(1)(10) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(4));
+    crc32_reg_rd(1)(3) <= (crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(2) xor crc32_reg_wr(1)(5) xor crc32_reg_wr(1)(11) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(2) xor crc32_reg_wr(0)(5));
+    crc32_reg_rd(1)(4) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(2) xor crc32_reg_wr(1)(3) xor crc32_reg_wr(1)(6) xor crc32_reg_wr(1)(12) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(2) xor crc32_reg_wr(0)(3) xor crc32_reg_wr(0)(6));
+    crc32_reg_rd(1)(5) <= (crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(3) xor crc32_reg_wr(1)(4) xor crc32_reg_wr(1)(7) xor crc32_reg_wr(1)(13) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(3) xor crc32_reg_wr(0)(4) xor crc32_reg_wr(0)(7));
+    crc32_reg_rd(1)(6) <= (crc32_reg_wr(1)(4) xor crc32_reg_wr(1)(5) xor crc32_reg_wr(1)(14) xor crc32_reg_wr(0)(4) xor crc32_reg_wr(0)(5));
+    crc32_reg_rd(1)(7) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(5) xor crc32_reg_wr(1)(6) xor crc32_reg_wr(1)(15) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(5) xor crc32_reg_wr(0)(6));
+    crc32_reg_rd(1)(8) <= (crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(6) xor crc32_reg_wr(1)(7) xor crc32_reg_wr(1)(16) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(6) xor crc32_reg_wr(0)(7));
+    crc32_reg_rd(1)(9) <= (crc32_reg_wr(1)(7) xor crc32_reg_wr(1)(17) xor crc32_reg_wr(0)(7));
+    crc32_reg_rd(1)(10) <= (crc32_reg_wr(1)(2) xor crc32_reg_wr(1)(18) xor crc32_reg_wr(0)(2));
+    crc32_reg_rd(1)(11) <= (crc32_reg_wr(1)(3) xor crc32_reg_wr(1)(19) xor crc32_reg_wr(0)(3));
+    crc32_reg_rd(1)(12) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(4) xor crc32_reg_wr(1)(20) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(4));
+    crc32_reg_rd(1)(13) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(5) xor crc32_reg_wr(1)(21) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(5));
+    crc32_reg_rd(1)(14) <= (crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(2) xor crc32_reg_wr(1)(6) xor crc32_reg_wr(1)(22) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(2) xor crc32_reg_wr(0)(6));
+    crc32_reg_rd(1)(15) <= (crc32_reg_wr(1)(2) xor crc32_reg_wr(1)(3) xor crc32_reg_wr(1)(7) xor crc32_reg_wr(1)(23) xor crc32_reg_wr(0)(2) xor crc32_reg_wr(0)(3) xor crc32_reg_wr(0)(7));
+    crc32_reg_rd(1)(16) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(2) xor crc32_reg_wr(1)(3) xor crc32_reg_wr(1)(4) xor crc32_reg_wr(1)(24) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(2) xor crc32_reg_wr(0)(3) xor crc32_reg_wr(0)(4));
+    crc32_reg_rd(1)(17) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(3) xor crc32_reg_wr(1)(4) xor crc32_reg_wr(1)(5) xor crc32_reg_wr(1)(25) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(3) xor crc32_reg_wr(0)(4) xor crc32_reg_wr(0)(5));
+    crc32_reg_rd(1)(18) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(2) xor crc32_reg_wr(1)(4) xor crc32_reg_wr(1)(5) xor crc32_reg_wr(1)(6) xor crc32_reg_wr(1)(26) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(2) xor crc32_reg_wr(0)(4) xor crc32_reg_wr(0)(5) xor crc32_reg_wr(0)(6));
+    crc32_reg_rd(1)(19) <= (crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(2) xor crc32_reg_wr(1)(3) xor crc32_reg_wr(1)(5) xor crc32_reg_wr(1)(6) xor crc32_reg_wr(1)(7) xor crc32_reg_wr(1)(27) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(2) xor crc32_reg_wr(0)(3) xor crc32_reg_wr(0)(5) xor crc32_reg_wr(0)(6) xor crc32_reg_wr(0)(7));
+    crc32_reg_rd(1)(20) <= (crc32_reg_wr(1)(3) xor crc32_reg_wr(1)(4) xor crc32_reg_wr(1)(6) xor crc32_reg_wr(1)(7) xor crc32_reg_wr(1)(28) xor crc32_reg_wr(0)(3) xor crc32_reg_wr(0)(4) xor crc32_reg_wr(0)(6) xor crc32_reg_wr(0)(7));
+    crc32_reg_rd(1)(21) <= (crc32_reg_wr(1)(2) xor crc32_reg_wr(1)(4) xor crc32_reg_wr(1)(5) xor crc32_reg_wr(1)(7) xor crc32_reg_wr(1)(29) xor crc32_reg_wr(0)(2) xor crc32_reg_wr(0)(4) xor crc32_reg_wr(0)(5) xor crc32_reg_wr(0)(7));
+    crc32_reg_rd(1)(22) <= (crc32_reg_wr(1)(2) xor crc32_reg_wr(1)(3) xor crc32_reg_wr(1)(5) xor crc32_reg_wr(1)(6) xor crc32_reg_wr(1)(30) xor crc32_reg_wr(0)(2) xor crc32_reg_wr(0)(3) xor crc32_reg_wr(0)(5) xor crc32_reg_wr(0)(6));
+    crc32_reg_rd(1)(23) <= (crc32_reg_wr(1)(3) xor crc32_reg_wr(1)(4) xor crc32_reg_wr(1)(6) xor crc32_reg_wr(1)(7) xor crc32_reg_wr(1)(31) xor crc32_reg_wr(0)(3) xor crc32_reg_wr(0)(4) xor crc32_reg_wr(0)(6) xor crc32_reg_wr(0)(7));
+    crc32_reg_rd(1)(24) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(2) xor crc32_reg_wr(1)(4) xor crc32_reg_wr(1)(5) xor crc32_reg_wr(1)(7) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(2) xor crc32_reg_wr(0)(4) xor crc32_reg_wr(0)(5) xor crc32_reg_wr(0)(7));
+    crc32_reg_rd(1)(25) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(2) xor crc32_reg_wr(1)(3) xor crc32_reg_wr(1)(5) xor crc32_reg_wr(1)(6) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(2) xor crc32_reg_wr(0)(3) xor crc32_reg_wr(0)(5) xor crc32_reg_wr(0)(6));
+    crc32_reg_rd(1)(26) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(2) xor crc32_reg_wr(1)(3) xor crc32_reg_wr(1)(4) xor crc32_reg_wr(1)(6) xor crc32_reg_wr(1)(7) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(2) xor crc32_reg_wr(0)(3) xor crc32_reg_wr(0)(4) xor crc32_reg_wr(0)(6) xor crc32_reg_wr(0)(7));
+    crc32_reg_rd(1)(27) <= (crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(3) xor crc32_reg_wr(1)(4) xor crc32_reg_wr(1)(5) xor crc32_reg_wr(1)(7) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(3) xor crc32_reg_wr(0)(4) xor crc32_reg_wr(0)(5) xor crc32_reg_wr(0)(7));
+    crc32_reg_rd(1)(28) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(4) xor crc32_reg_wr(1)(5) xor crc32_reg_wr(1)(6) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(4) xor crc32_reg_wr(0)(5) xor crc32_reg_wr(0)(6));
+    crc32_reg_rd(1)(29) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(5) xor crc32_reg_wr(1)(6) xor crc32_reg_wr(1)(7) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(5) xor crc32_reg_wr(0)(6) xor crc32_reg_wr(0)(7));
+    crc32_reg_rd(1)(30) <= (crc32_reg_wr(1)(0) xor crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(6) xor crc32_reg_wr(1)(7) xor crc32_reg_wr(0)(0) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(6) xor crc32_reg_wr(0)(7));
+    crc32_reg_rd(1)(31) <= (crc32_reg_wr(1)(1) xor crc32_reg_wr(1)(7) xor crc32_reg_wr(0)(1) xor crc32_reg_wr(0)(7));
+    
+  end process cr32_core;
+```
+
+This logic simply takes and 8-bit data input `crc32_reg_wr(0)(7 downto 0)` and perform the CRC32 calculations and gives the result in `crc32_reg_rd(1)`. This also logic is executed any time when the input (`crc32_reg_wr(0)`) changes.
+
+(If you are using Vivado don't forget to add it into the sources)
+
+### Files to be modified 
+
+Next step is modify the following files:
+
+* Main VHDL package file - [neorv32_package.vhd](./rtl/core/neorv32_package.vhd)
+
+  We modify the Custom Functions Subsystem (CFS) module in the **External Interface Types** to have space for our new CRC32 module:
+
+    ```diff
+    @@ -137,7 +137,7 @@ package neorv32_package is
+    
+      -- Custom Functions Subsystem (CFS) --
+      constant cfs_base_c           : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe00"; -- base address
+    -  constant cfs_size_c           : natural := 32*4; -- module's address space in bytes
+    +  constant cfs_size_c           : natural := 30*4; -- module's address space in bytes
+      constant cfs_reg0_addr_c      : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe00";
+      constant cfs_reg1_addr_c      : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe04";
+      constant cfs_reg2_addr_c      : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe08";
+    @@ -168,8 +168,12 @@ package neorv32_package is
+      constant cfs_reg27_addr_c     : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe6c";
+      constant cfs_reg28_addr_c     : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe70";
+      constant cfs_reg29_addr_c     : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe74";
+    -  constant cfs_reg30_addr_c     : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe78";
+    -  constant cfs_reg31_addr_c     : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe7c";
+    +  
+    +  --  Cyclic Redundancy Check (CRC32) -- 
+    +  constant crc32_base_c         : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe78"; -- base address
+    +  constant crc32_size_c         : natural := 2*4; -- module's address space in bytes
+    +  constant crc32_in_addr_c      : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe78";
+    +  constant crc32_out_addr_c     : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe7c";
+ 
+      -- Pulse-Width Modulation Controller (PWM) --
+      constant pwm_base_c           : std_ulogic_vector(data_width_c-1 downto 0) := x"fffffe80"; -- base address
+        
+    ```
+
+  Now we add the `IO_CRC32_EN` flag in the package:
+
+    ```diff
+    @@ -954,7 +958,8 @@ package neorv32_package is
+          IO_CFS_IN_SIZE               : positive := 32;    -- size of CFS input conduit in bits
+          IO_CFS_OUT_SIZE              : positive := 32;    -- size of CFS output conduit in bits
+          IO_NEOLED_EN                 : boolean := false;  -- implement NeoPixel-compatible smart LED interface (NEOLED)?
+    -      IO_NEOLED_TX_FIFO            : natural := 1       -- NEOLED TX FIFO depth, 1..32k, has to be a power of two
+    +      IO_NEOLED_TX_FIFO            : natural := 1;      -- NEOLED TX FIFO depth, 1..32k, has to be a power of two
+    +      IO_CRC32_EN                   : boolean := false   -- implement Cyclic Redundancy Check (CRC32)?
+        );
+        port (
+          -- Global control --
+
+    ```
+
+  Now we add the inputs and outputs of our CRC32 module:
+
+    ```diff
+    @@ -1015,6 +1020,9 @@ package neorv32_package is
+          -- Custom Functions Subsystem IO --
+          cfs_in_i       : in  std_ulogic_vector(IO_CFS_IN_SIZE-1  downto 0) := (others => 'U'); -- custom CFS inputs conduit
+          cfs_out_o      : out std_ulogic_vector(IO_CFS_OUT_SIZE-1 downto 0); -- custom CFS outputs conduit
+    +      -- Cyclic Redundancy Check (CRC32) IO  --
+    +      crc32_in_i    : in  std_ulogic_vector(31 downto 0); -- crc32 inputs
+    +      crc32_out_o   : out std_ulogic_vector(31 downto 0); -- crc32 outputs
+          -- NeoPixel-compatible smart LED interface (available if IO_NEOLED_EN = true) --
+          neoled_o       : out std_ulogic; -- async serial data line
+          -- System time --
+    ```
+
+  Next we add the CRC32 component:
+
+    ```diff
+    @@ -1809,6 +1817,26 @@ package neorv32_package is
+          cfs_out_o   : out std_ulogic_vector(CFS_OUT_SIZE-1 downto 0) -- custom outputs
+        );
+      end component;
+    +  
+    +  
+    +  -- Component: Cyclic Redundancy Check (CRC32) --------------------------------------------
+    +  -- -------------------------------------------------------------------------------------------
+    +  component neorv32_crc32
+    +    port (
+    +      -- host access --
+    +      clk_i       : in  std_ulogic; -- global clock line
+    +      rstn_i      : in  std_ulogic; -- global reset line, low-active, use as async
+    +      addr_i      : in  std_ulogic_vector(31 downto 0); -- address
+    +      rden_i      : in  std_ulogic; -- read enable
+    +      wren_i      : in  std_ulogic; -- word write enable
+    +      data_i      : in  std_ulogic_vector(31 downto 0); -- data in
+    +      data_o      : out std_ulogic_vector(31 downto 0); -- data out
+    +      ack_o       : out std_ulogic; -- transfer acknowledge
+    +      -- custom io (conduit) --
+    +      crc32_in_i    : in  std_ulogic_vector(31 downto 0); -- custom inputs
+    +      crc32_out_o   : out std_ulogic_vector(31 downto 0) -- custom outputs
+    +    );
+    +  end component;
+    
+      -- Component: Smart LED (WS2811/WS2812) Interface (NEOLED) --------------------------------
+      -- -------------------------------------------------------------------------------------------
+    ```
+
+  Due to the fact we added the `IO_CRC32_EN` flag, we also have to update it here in the package:
+
+    ```diff
+    @@ -1942,7 +1970,8 @@ package neorv32_package is
+          IO_CFS_EN                    : boolean; -- implement custom functions subsystem (CFS)?
+          IO_SLINK_EN                  : boolean; -- implement stream link interface?
+          IO_NEOLED_EN                 : boolean; -- implement NeoPixel-compatible smart LED interface (NEOLED)?
+    -      IO_XIRQ_NUM_CH               : natural  -- number of external interrupt (XIRQ) channels to implement
+    +      IO_XIRQ_NUM_CH               : natural; -- number of external interrupt (XIRQ) channels to implement
+    +      IO_CRC32_EN                  : boolean  -- implement Cyclic Redundancy Check (CRC32)?
+        );
+        port (
+          -- host access --
+
+    ```
+
+* System/Processor Configuration Information Memory (SYSINFO) - [neorv32_sysinfo.vhd](./rtl/core/neorv32_sysinfo.vhd)
+
+  Add the `IO_CRC32_EN` flag we added previously:
+
+    ```diff
+    @@ -91,7 +91,8 @@ entity neorv32_sysinfo is
+        IO_CFS_EN                    : boolean; -- implement custom functions subsystem (CFS)?
+        IO_SLINK_EN                  : boolean; -- implement stream link interface?
+        IO_NEOLED_EN                 : boolean; -- implement NeoPixel-compatible smart LED interface (NEOLED)?
+    -    IO_XIRQ_NUM_CH               : natural  -- number of external interrupt (XIRQ) channels to implement
+    +    IO_XIRQ_NUM_CH               : natural;  -- number of external interrupt (XIRQ) channels to implement
+    +    IO_CRC32_EN                   : boolean -- implement Cyclic Redundancy Check (CRC32)?
+      );
+      port (
+        -- host access --
+    ```
+
+    Add one bit for the CRC32 flag in the System Information Memory (SYSINFO):
+
+    ```diff
+    @@ -181,8 +182,9 @@ begin
+      sysinfo_mem(2)(26) <= bool_to_ulogic_f(IO_UART1_EN);  -- secondary universal asynchronous receiver/transmitter (UART1) implemented?
+      sysinfo_mem(2)(27) <= bool_to_ulogic_f(IO_NEOLED_EN); -- NeoPixel-compatible smart LED interface (NEOLED) implemented?
+      sysinfo_mem(2)(28) <= bool_to_ulogic_f(boolean(IO_XIRQ_NUM_CH > 0)); -- external interrupt controller (XIRQ) implemented?
+    +  sysinfo_mem(2)(29) <= bool_to_ulogic_f(IO_CRC32_EN);   -- Cyclic Redundancy Check (CRC32) implemented?
+      --
+    -  sysinfo_mem(2)(31 downto 29) <= (others => '0'); -- reserved
+    +  sysinfo_mem(2)(31 downto 30) <= (others => '0'); -- reserved
+    
+      -- SYSINFO(3): Cache configuration --
+      sysinfo_mem(3)(03 downto 00) <= std_ulogic_vector(to_unsigned(index_size_f(ICACHE_BLOCK_SIZE),    4)) when (ICACHE_EN = true) else (others => '0'); -- i-cache: log2(block_size_in_bytes)
+    ```
+
+* Processor Top Entity - [neorv32_top.vhd](./rtl/core/neorv32_top.vhd)
+
+  Add the `IO_CRC32_EN` flag we added previously:
+
+    ```diff
+    @@ -131,7 +131,8 @@ entity neorv32_top is
+        IO_CFS_IN_SIZE               : positive := 32;    -- size of CFS input conduit in bits
+        IO_CFS_OUT_SIZE              : positive := 32;    -- size of CFS output conduit in bits
+        IO_NEOLED_EN                 : boolean := false;  -- implement NeoPixel-compatible smart LED interface (NEOLED)?
+    -    IO_NEOLED_TX_FIFO            : natural := 1       -- NEOLED TX FIFO depth, 1..32k, has to be a power of two
+    +    IO_NEOLED_TX_FIFO            : natural := 1;      -- NEOLED TX FIFO depth, 1..32k, has to be a power of two
+    +    IO_CRC32_EN                   : boolean := false   -- implement Cyclic Redundancy Check (CRC32)?
+      );
+      port (
+        -- Global control --
+    ```
+
+  Now we add the inputs and outputs of our CRC32 module:
+
+    ```diff
+    @@ -204,6 +205,10 @@ entity neorv32_top is
+        -- Custom Functions Subsystem IO (available if IO_CFS_EN = true) --
+        cfs_in_i       : in  std_ulogic_vector(IO_CFS_IN_SIZE-1  downto 0) := (others => 'U'); -- custom CFS inputs conduit
+        cfs_out_o      : out std_ulogic_vector(IO_CFS_OUT_SIZE-1 downto 0); -- custom CFS outputs conduit
+    +    
+    +    -- Cyclic Redundancy Check (CRC32) IO (available if IO_CRC32_EN = true) --
+    +    crc32_in_i    : in  std_ulogic_vector(31 downto 0); -- crc32 inputs
+    +    crc32_out_o   : out std_ulogic_vector(31 downto 0); -- crc32 outputs
+    
+        -- NeoPixel-compatible smart LED interface (available if IO_NEOLED_EN = true) --
+        neoled_o       : out std_ulogic; -- async serial data line
+    ```
+
+  Add `RESP_CRC32` for the response bus:
+
+    ```diff
+    @@ -307,7 +312,7 @@ architecture neorv32_top_rtl of neorv32_top is
+    
+      -- module response bus - device ID --
+      type resp_bus_id_t is (RESP_IMEM, RESP_DMEM, RESP_BOOTROM, RESP_WISHBONE, RESP_GPIO, RESP_MTIME, RESP_UART0, RESP_UART1, RESP_SPI,
+    -                         RESP_TWI, RESP_PWM, RESP_WDT, RESP_TRNG, RESP_CFS, RESP_NEOLED, RESP_SYSINFO, RESP_OCD, RESP_SLINK, RESP_XIRQ);
+    +                         RESP_TWI, RESP_PWM, RESP_WDT, RESP_TRNG, RESP_CFS, RESP_CRC32, RESP_NEOLED, RESP_SYSINFO, RESP_OCD, RESP_SLINK, RESP_XIRQ);
+    
+      -- module response bus --
+      type resp_bus_t is array (resp_bus_id_t) of resp_bus_entry_t;
+    ```
+  
+  Add the `IO_CRC32_EN` to inform if the module is synthesized at the end:
+
+    ```diff
+  @@ -356,6 +361,7 @@ begin
+    cond_sel_string_f(IO_WDT_EN, "WDT ", "") &
+    cond_sel_string_f(IO_TRNG_EN, "TRNG ", "") &
+    cond_sel_string_f(IO_CFS_EN, "CFS ", "") &
+  +  cond_sel_string_f(IO_CRC32_EN, "CRC32 ", "") &
+    cond_sel_string_f(io_slink_en_c, "SLINK ", "") &
+    cond_sel_string_f(IO_NEOLED_EN, "NEOLED ", "") &
+    cond_sel_string_f(boolean(XIRQ_NUM_CH > 0), "XIRQ ", "") &
+    ```
+
+  Add the CRC32 Instance:
+
+    ```diff
+    @@ -906,6 +912,34 @@ begin
+        cfs_out_o <= (others => '0');
+      end generate;
+    
+    +  -- Cyclic Redundancy Check (CRC32) -------------------------------------------------------
+    +  -- -------------------------------------------------------------------------------------------
+    +  neorv32_crc32_inst_true:
+    +  if (IO_CRC32_EN = true) generate
+    +    neorv32_crc32_inst: neorv32_crc32
+    +    port map (
+    +      -- host access --
+    +      clk_i       => clk_i,                    -- global clock line
+    +      rstn_i      => sys_rstn,                 -- global reset line, low-active, use as async
+    +      addr_i      => p_bus.addr,               -- address
+    +      rden_i      => io_rden,                  -- read enable
+    +      wren_i      => io_wren,                  -- byte write enable
+    +      data_i      => p_bus.wdata,              -- data in
+    +      data_o      => resp_bus(RESP_CRC32).rdata, -- data out
+    +      ack_o       => resp_bus(RESP_CRC32).ack,   -- transfer acknowledge
+    +    -- CRC32 IO  --
+    +      crc32_in_i    => crc32_in_i,                 -- crc32 inputs
+    +      crc32_out_o   => crc32_out_o                 -- crc32 outputs
+    +    );
+    +    resp_bus(RESP_CRC32).err <= '0'; -- no access error possible
+    +  end generate;
+    +
+    +  neorv32_crc32_inst_false:
+    +  if (IO_CRC32_EN = false) generate
+    +    resp_bus(RESP_CRC32) <= resp_bus_entry_terminate_c;
+    +    crc32_out_o <= (others => '0');
+    +  end generate;
+    +
+    
+      -- General Purpose Input/Output Port (GPIO) -----------------------------------------------
+      -- -------------------------------------------------------------------------------------------
+    
+    ```
+
+  Connect the `IO_CRC32_EN` flag:
+
+    ```diff
+    @@ -1408,7 +1442,8 @@ begin
+        IO_CFS_EN                    => IO_CFS_EN,            -- implement custom functions subsystem (CFS)?
+        IO_SLINK_EN                  => io_slink_en_c,        -- implement stream link interface?
+        IO_NEOLED_EN                 => IO_NEOLED_EN,         -- implement NeoPixel-compatible smart LED interface (NEOLED)?
+    -    IO_XIRQ_NUM_CH               => XIRQ_NUM_CH           -- number of external interrupt (XIRQ) channels to implement
+    +    IO_XIRQ_NUM_CH               => XIRQ_NUM_CH,          -- number of external interrupt (XIRQ) channels to implement
+    +    IO_CRC32_EN                  => IO_CRC32_EN           -- implement Cyclic Redundancy Check (CRC32)?
+      )
+      port map (
+        -- host access --
+    
+    ```
+
+* Test Setup - [neorv32_test_setup_bootloader.vhd](./rtl/core/neorv32_test_setup_bootloader.vhd)
+
+  Add the I/O signals for the CRC32 module:
+
+    ```diff
+    @@ -54,13 +54,17 @@ entity neorv32_test_setup_bootloader is
+        gpio_o      : out std_ulogic_vector(7 downto 0); -- parallel output
+        -- UART0 --
+        uart0_txd_o : out std_ulogic; -- UART0 send data
+    -    uart0_rxd_i : in  std_ulogic  -- UART0 receive data
+    +    uart0_rxd_i : in  std_ulogic;  -- UART0 receive data
+    +    -- CRC32 --
+    +    crc32_in_i    : in  std_ulogic_vector(31 downto 0); -- crc32 inputs
+    +    crc32_out_o   : out std_ulogic_vector(7 downto 0) -- crc32 outputs  (just 8-bits) to be displayed on the leds
+      );
+    end entity;
+    
+    architecture neorv32_test_setup_bootloader_rtl of neorv32_test_setup_bootloader is
+    
+      signal con_gpio_o : std_ulogic_vector(63 downto 0);
+    +  signal con_crc32_o : std_ulogic_vector(31 downto 0);
+    
+    begin
+    
+    ```
+  
+  Enable the CRC module:
+
+    ```diff
+    @@ -84,7 +88,8 @@ begin
+        -- Processor peripherals --
+        IO_GPIO_EN                   => true,              -- implement general purpose input/output port unit (GPIO)?
+        IO_MTIME_EN                  => true,              -- implement machine system timer (MTIME)?
+    -    IO_UART0_EN                  => true               -- implement primary universal asynchronous receiver/transmitter (UART0)?
+    +    IO_UART0_EN                  => true,              -- implement primary universal asynchronous receiver/transmitter (UART0)?
+    +    IO_CRC32_EN                  => true               -- implement Cyclic Redundancy Check (CRC32)?
+      )
+      port map (
+        -- Global control --
+    ```
+
+  Connect the signals and set the output:
+
+    ```diff
+    @@ -94,11 +99,16 @@ begin
+        gpio_o      => con_gpio_o,  -- parallel output
+        -- primary UART0 (available if IO_UART0_EN = true) --
+        uart0_txd_o => uart0_txd_o, -- UART0 send data
+    -    uart0_rxd_i => uart0_rxd_i  -- UART0 receive data
+    +    uart0_rxd_i => uart0_rxd_i, -- UART0 receive data
+    +    -- CRC32
+    +    crc32_in_i    => crc32_in_i,
+    +    crc32_out_o   => con_crc32_o
+      );
+    
+      -- GPIO output --
+      gpio_o <= con_gpio_o(7 downto 0);
+    +  -- CRC32 output --
+    +  crc32_out_o <= con_crc32_o(7 downto 0);
+    
+    
+    end architecture;
+    ```
+
+* Nexys A7 - [nexys_a7_test_setup.xdc](./setups/vivado/nexys-a7-test-setup/nexys_a7_test_setup.xdc)
+
+  Configure the Nexys A7 for the inputs and outputs:
+
+    ```diff
+    @@ -15,6 +15,16 @@ set_property -dict { PACKAGE_PIN V17  IOSTANDARD LVCMOS33 } [get_ports { gpio_o[
+    set_property -dict { PACKAGE_PIN U17  IOSTANDARD LVCMOS33 } [get_ports { gpio_o[6] }]; #IO_L17P_T2_A14_D30_14 Sch=led[6]
+    set_property -dict { PACKAGE_PIN U16  IOSTANDARD LVCMOS33 } [get_ports { gpio_o[7] }]; #IO_L18P_T2_A12_D28_14 Sch=led[7]
+    
+    +## LEDs
+    +set_property -dict { PACKAGE_PIN V11  IOSTANDARD LVCMOS33 } [get_ports { crc32_out_o[0] }]; 
+    +set_property -dict { PACKAGE_PIN V12  IOSTANDARD LVCMOS33 } [get_ports { crc32_out_o[1] }]; 
+    +set_property -dict { PACKAGE_PIN V14  IOSTANDARD LVCMOS33 } [get_ports { crc32_out_o[2] }]; 
+    +set_property -dict { PACKAGE_PIN V15  IOSTANDARD LVCMOS33 } [get_ports { crc32_out_o[3] }]; 
+    +set_property -dict { PACKAGE_PIN T16  IOSTANDARD LVCMOS33 } [get_ports { crc32_out_o[4] }]; 
+    +set_property -dict { PACKAGE_PIN U14  IOSTANDARD LVCMOS33 } [get_ports { crc32_out_o[5] }]; 
+    +set_property -dict { PACKAGE_PIN T15  IOSTANDARD LVCMOS33 } [get_ports { crc32_out_o[6] }]; 
+    +set_property -dict { PACKAGE_PIN V16  IOSTANDARD LVCMOS33 } [get_ports { crc32_out_o[7] }]; 
+    +
+    ## USB-UART Interface
+    set_property -dict { PACKAGE_PIN D4  IOSTANDARD LVCMOS33 } [get_ports { uart0_txd_o }]; #IO_L11N_T1_SRCC_35 Sch=uart_rxd_out
+    set_property -dict { PACKAGE_PIN C4  IOSTANDARD LVCMOS33 } [get_ports { uart0_rxd_i }]; #IO_L7P_T1_AD6P_35     Sch=uart_txd_in
+    ```
+
+You now can proceed to perform the synthesis and generate the bitstream and upload it to the board.
+
+To test that this logic works, we then continue writing a test in the [software folder](./sw). We can use the [blink_led](./sw/example/blink_led/main.c) program to test it quickly. 
+
+
+### Test Example - Software
+
+*  Cyclic Redundancy Check (CRC32) HW Driver - [neorv32_crc32.c](./sw/lib/source/neorv32_crc32.c)
+
+    Create a function to perform the CRC32 logic calculation: 
+
+    ```C
+
+    // #################################################################################################
+    // # << NEORV32: neorv32_crc32.c - Cyclic Redundancy Check (CRC32) HW Driver        >>             #
+    // # ********************************************************************************************* #
+
+    /**********************************************************************//**
+    * @file neorv32_crc32.c
+    * @author Kevin Bello
+    * @brief Cyclic Redundancy Check (CRC32) HW driver header file.
+    * 
+    * @note These functions should only be used if the CRC32 was synthesized (IO_CRC32_EN = true).
+    **************************************************************************/
+
+    #include "neorv32.h"
+    #include "neorv32_crc32.h"
+
+
+    /**********************************************************************//**
+    * Check if custom functions unit 0 was synthesized.
+    *
+    * @return 0 if CRC32 was not synthesized, 1 if CRC32 is available.
+    **************************************************************************/
+    int neorv32_crc32_available(void) {
+
+      if (SYSINFO_FEATURES & (1 << SYSINFO_FEATURES_IO_CRC32)) {
+        return 1;
+      }
+      else {
+        return 0;
+      }
+    }
+
+    /**********************************************************************//**
+    * Cyclic Redundancy Check (CRC32)
+    *
+    * @return Current input port state (32-bit).
+    **************************************************************************/
+    uint32_t neorv32_crc32(const char *s) {
+
+    uint32_t result = 0;
+    CRC32_OUTPUT = 0xFFFFFFFF;
+      char c = 0;
+      while ((c = *s++)) {
+        CRC32_INPUT = (0x000000FF & c);
+        result = ~CRC32_OUTPUT;
+        CRC32_OUTPUT = CRC32_OUTPUT;
+      }
+      return result;
+    }
+
+    ```
+
+    This function takes a string input and performs the CRC32 calculation.
+
+*  Cyclic Redundancy Check (CRC32) HW Driver - [neorv32_crc32.h](./sw/lib/include/neorv32_crc32.h)
+
+    Create its respective header:
+
+    ```C
+    // #################################################################################################
+    // # << NEORV32: neorv32_crc32.h - Cyclic Redundancy Check (CRC32) HW Driver (stub) >>             #
+    // # ********************************************************************************************* #
+
+    /**********************************************************************//**
+    * @file neorv32_crc32.h
+    * @author Kevin Bello
+    * @brief Cyclic Redundancy Check (CRC32) HW driver header file.
+    * *
+    * @note These functions should only be used if the CRC32 was synthesized (IO_CRC32_EN = true).
+    **************************************************************************/
+
+    #ifndef neorv32_crc32_h
+    #define neorv32_crc32_h
+
+    // prototypes
+    int neorv32_crc32_available(void);
+    uint32_t neorv32_crc32(const char *s);
+
+    #endif // neorv32_crc32_h
+
+    ```
+*  Main Core Library File - [neorv32.h](./sw/lib/include/neorv32.h)
+
+    Add the memory addresses for our CRC32 Module:
+
+    ```diff
+    @@ -539,7 +542,7 @@ enum NEORV32_CLOCK_PRSC_enum {
+    /** CFS base address */
+    #define CFS_BASE (0xFFFFFE00UL) // /**< CFS base address */
+    /** CFS address space size in bytes */
+    -#define CFS_SIZE (64*4) // /**< CFS address space size in bytes */
+    +#define CFS_SIZE (30*4) // /**< CFS address space size in bytes */
+    
+    /** custom CFS register 0 */
+    #define CFS_REG_0  (*(IO_REG32 (CFS_BASE + 0))) // /**< (r)/(w): CFS register 0, user-defined */
+    @@ -601,10 +604,22 @@ enum NEORV32_CLOCK_PRSC_enum {
+    #define CFS_REG_28 (*(IO_REG32 (CFS_BASE + 112))) // /**< (r)/(w): CFS register 28, user-defined */
+    /** custom CFS register 29 */
+    #define CFS_REG_29 (*(IO_REG32 (CFS_BASE + 116))) // /**< (r)/(w): CFS register 29, user-defined */
+    -/** custom CFS register 30 */
+    -#define CFS_REG_30 (*(IO_REG32 (CFS_BASE + 120))) // /**< (r)/(w): CFS register 30, user-defined */
+    -/** custom CFS register 31 */
+    -#define CFS_REG_31 (*(IO_REG32 (CFS_BASE + 124))) // /**< (r)/(w): CFS register 31, user-defined */
+    +/**@}*/
+    +
+    +
+    +/**********************************************************************//**
+    + * @name IO Device: Cyclic Redundancy Check (CRC32)
+    + **************************************************************************/
+    +/**@{*/
+    +/** CRC32 base address */
+    +#define CRC32_BASE (0xFFFFFE78UL) // /**< CRC32 base address */
+    +/** CRC32 address space size in bytes */
+    +#define CRC32_SIZE (2*4) // /**< CRC32 address space size in bytes */
+    +
+    +/** CRC32 input register (r/w) */
+    +#define CRC32_INPUT (*(IO_REG32 (CRC32_BASE + 0)))
+    +/** CRC32 output register (r/w) */
+    +#define CRC32_OUTPUT (*(IO_REG32 (CRC32_BASE + 4)))
+    /**@}*/
+    ```
+  
+    Add the CRC32 in the sysinfo enum:
+
+    ```diff
+    @@ -1161,7 +1176,8 @@ enum NEORV32_SYSINFO_FEATURES_enum {
+      SYSINFO_FEATURES_IO_SLINK         = 25, /**< SYSINFO_FEATURES (25) (r/-): Stream link interface implemented when 1 (via SLINK_NUM_RX & SLINK_NUM_TX generics) */
+      SYSINFO_FEATURES_IO_UART1         = 26, /**< SYSINFO_FEATURES (26) (r/-): Secondary universal asynchronous receiver/transmitter 1 implemented when 1 (via IO_UART1_EN generic) */
+      SYSINFO_FEATURES_IO_NEOLED        = 27, /**< SYSINFO_FEATURES (27) (r/-): NeoPixel-compatible smart LED interface implemented when 1 (via IO_NEOLED_EN generic) */
+    -  SYSINFO_FEATURES_IO_XIRQ          = 28  /**< SYSINFO_FEATURES (28) (r/-): External interrupt controller implemented when 1 (via XIRQ_NUM_IO generic) */
+    +  SYSINFO_FEATURES_IO_XIRQ          = 28, /**< SYSINFO_FEATURES (28) (r/-): External interrupt controller implemented when 1 (via XIRQ_NUM_IO generic) */
+    +  SYSINFO_FEATURES_IO_CRC32         = 29  /**< SYSINFO_FEATURES (29) (r/-): Cyclic Redundancy Check (CRC32) */
+    };
+    
+    /**********************************************************************//**
+    ```
+
+    Add the header file of the CRC32 module:
+
+    ```diff
+    @@ -1204,6 +1220,7 @@ enum NEORV32_SYSINFO_FEATURES_enum {
+    
+    // io/peripheral devices
+    #include "neorv32_cfs.h"
+    +#include "neorv32_crc32.h"
+    #include "neorv32_gpio.h"
+    #include "neorv32_mtime.h"
+    #include "neorv32_neoled.h"
+    ```
+    
+* Blink led [main.c](./sw/example/blink_led/main.c)
+
+    Add our `neorv32_crc32(const char *s)` function in the main: 
+
+    ```diff
+    @@ -117,5 +117,7 @@ void blink_led_c(void) {
+      while (1) {
+        neorv32_gpio_port_set(cnt++ & 0xFF); // increment counter and mask for lowest 8 bit
+        neorv32_cpu_delay_ms(200); // wait 200ms using busy wait
+    +    const char *sentence = "This is a Test text!";
+    +    neorv32_uart0_printf("%s -> CRC-32: Ox%x \n", sentence ,neorv32_crc32(sentence));
+      }
+    }
+    ```
+
+You now can proceed to perform the compilation of this test and upload the program into the board.
+
+If everything goes well you will have something like this:
+
+![video](./docs/figures/test.gif)
+
+Well done! You have add your own custom module! 🔥🔥🔥
 
-The NEORV32 Processor is a customizable microcontroller-like system on chip (SoC) that is based on the RISC-V NEORV32 CPU.
-The project is intended as auxiliary processor in larger SoC designs or as *ready-to-go* stand-alone
-custom / customizable microcontroller.
-
-:information_source: Want to know more? Check out the [project's rationale](https://stnolting.github.io/neorv32/#_rationale).
-
-:books: For detailed information take a look at the [NEORV32 documentation (online at GitHub-pages)](https://stnolting.github.io/neorv32/).
-The *doxygen*-based documentation of the *software framework* is also available online
-at [GitHub-pages](https://stnolting.github.io/neorv32/sw/files.html).
-
-:label: The project's change log is available in [`CHANGELOG.md`](https://github.com/stnolting/neorv32/blob/master/CHANGELOG.md).
-To see the changes between *official* releases visit the project's [release page](https://github.com/stnolting/neorv32/releases).
-
-:package: The [`setups`](https://github.com/stnolting/neorv32/tree/master/setups) folder provides exemplary setups targeting
-various FPGA boards and toolchains to get you started. Several example programs to be run on your setup can be found in
-[`sw/example`](https://github.com/stnolting/neorv32/tree/master/sw/example).
-
-:spiral_notepad: Check out the [project boards](https://github.com/stnolting/neorv32/projects) for a list of current **ideas**,
-**TODOs**, features being **planned** and **work-in-progress**.
-
-:bulb: Feel free to open a [new issue](https://github.com/stnolting/neorv32/issues) or start a
-[new discussion](https://github.com/stnolting/neorv32/discussions) if you have questions, comments, ideas or if something is
-not working as expected.
-Check out how to contribute in [`CONTRIBUTE.md`](https://github.com/stnolting/neorv32/blob/master/CONTRIBUTING.md).
-
-:rocket: Check out the [quick links below](#Getting-Started) or directly jump to the
-[*User Guide*](https://stnolting.github.io/neorv32/ug/) to get started
-setting up your NEORV32 setup!
-
-
-### Project Key Features
-
-* [CPU](#NEORV32-CPU-Features) plus [Processor/SoC](#NEORV32-Processor-Features) plus [Software Framework & Tooling](#Software-Framework-and-Tooling)
-* completely described in behavioral, platform-independent VHDL - no primitives, macros, etc.
-* fully synchronous design, no latches, no gated clocks
-* be as small as possible (while being as RISC-V-compliant as possible) – but with a reasonable size-performance trade-off
-(the processor has to fit in a Lattice iCE40 UltraPlus 5k low-power FPGA running at 22+ MHz)
-* from zero to `printf("hello world!");` - completely open source and documented
-* easy to use even for FPGA/RISC-V starters – intended to work *out of the box*
-
-[[back to top](#The-NEORV32-RISC-V-Processor)]
-
-
-
-## NEORV32 Processor Features
-
-The NEORV32 Processor (top entity: [`rtl/core/neorv32_top.vhd`](https://github.com/stnolting/neorv32/blob/master/rtl/core/neorv32_top.vhd))
-provides a full-featured SoC build around the NEORV32 CPU. It is highly configurable via generics
-to allow a flexible customization according to your needs. Note that all modules listed below are _optional_.
-In-depth detailed information regarding the processor/SoC can be found in the :books:
-[online documentation - _"NEORV32 Processors (SoC)"_](https://stnolting.github.io/neorv32/#_neorv32_processor_soc).
-
-**Memory**
-
-* processor-internal data and instruction memories ([DMEM](https://stnolting.github.io/neorv32/#_data_memory_dmem) /
-[IMEM](https://stnolting.github.io/neorv32/#_instruction_memory_imem)) &
-cache ([iCACHE](https://stnolting.github.io/neorv32/#_processor_internal_instruction_cache_icache))
-* bootloader ([BOOTLDROM](https://stnolting.github.io/neorv32/#_bootloader_rom_bootrom)) with serial user interface
-  * supports boot via UART or from external SPI flash
-
-**Timers**
-
-* machine system timer ([MTIME](https://stnolting.github.io/neorv32/#_machine_system_timer_mtime)), RISC-V spec. compatible
-* watchdog timer ([WDT](https://stnolting.github.io/neorv32/#_watchdog_timer_wdt))
-
-**IO**
-
-* standard serial interfaces
-([UART](https://stnolting.github.io/neorv32/#_primary_universal_asynchronous_receiver_and_transmitter_uart0),
-[SPI](https://stnolting.github.io/neorv32/#_serial_peripheral_interface_controller_spi),
-[TWI / I²C](https://stnolting.github.io/neorv32/#_two_wire_serial_interface_controller_twi))
-* general purpose [GPIO](https://stnolting.github.io/neorv32/#_general_purpose_input_and_output_port_gpio) and
-[PWM](https://stnolting.github.io/neorv32/#_pulse_width_modulation_controller_pwm)
-* smart LED interface ([NEOLED](https://stnolting.github.io/neorv32/#_smart_led_interface_neoled)) to directly drive _NeoPixel(TM)_ LEDs
-
-**SoC Connectivity and Integration**
-
-* 32-bit external bus interface, Wishbone b4 compatible
-([WISHBONE](https://stnolting.github.io/neorv32/#_processor_external_memory_interface_wishbone_axi4_lite))
-  * [wrapper](https://github.com/stnolting/neorv32/blob/master/rtl/system_integration/neorv32_SystemTop_axi4lite.vhd) for AXI4-Lite master interface
-* 32-bit stram link interface with up to 8 independent RX and TX links
-([SLINK](https://stnolting.github.io/neorv32/#_stream_link_interface_slink))
-  * AXI4-Stream compatible
-* external interrupt controller with up to 32 channels
-([XIRQ](https://stnolting.github.io/neorv32/#_external_interrupt_controller_xirq))
-* custom functions subsystem ([CFS](https://stnolting.github.io/neorv32/#_custom_functions_subsystem_cfs))
-for tightly-coupled custom co-processor extensions
-
-**Advanced**
-
-* _true random_ number generator ([TRNG](https://stnolting.github.io/neorv32/#_true_random_number_generator_trng))
-* on-chip debugger ([OCD](https://stnolting.github.io/neorv32/#_on_chip_debugger_ocd)) via JTGA - implementing
-the [*Minimal RISC-V Debug Specification Version 0.13.2*](https://github.com/riscv/riscv-debug-spec)
-and compatible with *OpenOCD* and *gdb*
-
-:information_source: It is recommended to use the processor setup even if you want to **use the CPU in stand-alone mode**.
-Just disable all optional processor-internal modules via the according generics and you will get a "CPU wrapper" that
-provides a minimal CPU environment and an external memory interface (like AXI4). This minimal setup allows to further use
-the default bootloader and software framework. From this base you can start building your own processor system.
-
-[[back to top](#The-NEORV32-RISC-V-Processor)]
-
-
-### FPGA Implementation Results - Processor
-
-The hardware resources used by a specifc processor setup is defined by the implemented CPU extensions
-([see below](#FPGA-Implementation-Results---CPU)), the configuration of the peripheral modules and some "glue logic".
-Section [_"FPGA Implementation Results - Processor Modules"_](https://stnolting.github.io/neorv32/#_processor_modules)
-of the online datasheet shows the ressource utilization of each optional processor module to allow an
-estimation of the actual setup's hardware requirements.
-
-:information_source: The [`setups`](https://github.com/stnolting/neorv32/tree/master/setups) folder provides exemplary FPGA
-setups targeting various FPGA boards and toolchains. These setups also provide ressource utilization reports for different
-SoC configurations
-
-[[back to top](#The-NEORV32-RISC-V-Processor)]
-
-
-
-## NEORV32 CPU Features
-
-:books: In-depth detailed information regarding the CPU can be found in the
-[online documentation - _"NEORV32 Central Processing Unit"_](https://stnolting.github.io/neorv32/#_neorv32_central_processing_unit_cpu).
-
-The CPU (top entity: [`rtl/core/neorv32_cpu.vhd`](https://github.com/stnolting/neorv32/blob/master/rtl/core/neorv32_cpu.vhd))
-implements the RISC-V 32-bit `rv32` ISA with optional extensions (see below). It is compatible to a subset of the
-*Unprivileged ISA Specification* [(Version 2.2)](https://github.com/stnolting/neorv32/blob/master/docs/references/riscv-spec.pdf)
-and a subset of the *Privileged Architecture Specification* [(Version 1.12-draft)](https://github.com/stnolting/neorv32/blob/master/docs/references/riscv-privileged.pdf).
-Compatiility is checked by passing the [official RISC-V architecture tests](https://github.com/riscv/riscv-arch-test)
-(see [`sim/README`](sim/README.md)).
-
-The core implements a little-endian von-Neumann architecture using two pipeline stages. Each stage uses a multi-cycle processing
-scheme. The CPU supports three privilege levels (`machine` and optional `user` and `debug_mode`), three standard RISC-V machine
-interrupts (`MTI`, `MEI`, `MSI`), a single non-maskable interrupt plus 16 _fast interrupt requests_ as custom extensions.
-It also supports **all** standard RISC-V exceptions (instruction/load/store misaligned address & bus access fault, illegal
-instruction, breakpoint, environment call)
-(see :books: [_"Full Virtualization"_](https://stnolting.github.io/neorv32/#_full_virtualization)).
-
-
-### Available ISA Extensions
-
-Currently, the following _optional_ RISC-V-compatible ISA extensions are implemented (linked to the according
-documentation section). Note that the `X` extension is always enabled.
-
-**RV32
-[[`I`](https://stnolting.github.io/neorv32/#_i_base_integer_isa)/
-[`E`](https://stnolting.github.io/neorv32/#_e_embedded_cpu)]
-[[`A`](https://stnolting.github.io/neorv32/#_a_atomic_memory_access)]
-[[`C`](https://stnolting.github.io/neorv32/#_c_compressed_instructions)]
-[[`M`](https://stnolting.github.io/neorv32/#_m_integer_multiplication_and_division)]
-[[`U`](https://stnolting.github.io/neorv32/#_u_less_privileged_user_mode)]
-[[`X`](https://stnolting.github.io/neorv32/#_x_neorv32_specific_custom_extensions)]
-[[`Zbb`](https://stnolting.github.io/neorv32/#_zbb_basic_bit_manipulation_operations)]
-[[`Zfinx`](https://stnolting.github.io/neorv32/#_zfinx_single_precision_floating_point_operations)]
-[[`Zicsr`](https://stnolting.github.io/neorv32/#_zicsr_control_and_status_register_access_privileged_architecture)]
-[[`Zifencei`](https://stnolting.github.io/neorv32/#_zifencei_instruction_stream_synchronization)]
-[[`Zmmul`](https://stnolting.github.io/neorv32/#_zmmul_integer_multiplication)]
-[[`PMP`](https://stnolting.github.io/neorv32/#_pmp_physical_memory_protection)]
-[[`HPM`](https://stnolting.github.io/neorv32/#_hpm_hardware_performance_monitors)]
-[[`DEBUG`](https://stnolting.github.io/neorv32/#_cpu_debug_mode)]**
-
-:warning: The `Zbb`, `Zfinx` and `Zmmul` RISC-V extensions are frozen but not officially ratified yet. Hence, there is no
-upstream gcc support. To circumvence this, the NEORV32 software framework provides _intrinsic_ libraries for these extensions.
-
-[[back to top](#The-NEORV32-RISC-V-Processor)]
-
-
-### FPGA Implementation Results - CPU
-
-Implementation results for _exemplary_ CPU configuration generated for an **Intel Cyclone IV EP4CE22F17C6N FPGA**
-using **Intel Quartus Prime Lite 20.1** ("balanced implementation"). The timing information is derived
-from the Timing Analyzer / Slow 1200mV 0C Model. No constraints were used at all.
-
-Results generated for hardware version [`1.5.7.10`](https://github.com/stnolting/neorv32/blob/master/CHANGELOG.md).
-
-| CPU Configuration                                 | LEs  | FFs  | Memory bits | DSPs (9-bit) | f_max   |
-|:--------------------------------------------------|:----:|:----:|:-----------:|:------------:|:-------:|
-| `rv32i`                                           |  806 |  359 |        1024 |            0 | 125 MHz |
-| `rv32i_Zicsr`                                     | 1729 |  813 |        1024 |            0 | 124 MHz |
-| `rv32imac_Zicsr`                                  | 2511 | 1074 |        1024 |            0 | 124 MHz |
-
-:information_source: An incremental list of CPU exntension's hardware utilization can found in
-[online documentation - _"FPGA Implementation Results - CPU"_](https://stnolting.github.io/neorv32/#_cpu).
-
-:information_source: The CPU provides options to further reduce the footprint (for example by constraining
-the CPU-internal counters). See the [online data](https://stnolting.github.io/neorv32) sheet for more information.
-
-[[back to top](#The-NEORV32-RISC-V-Processor)]
-
-
-### Performance
-
-The NEORV32 CPU is based on a two-stages pipelined architecutre. Since both stage use a multi-cycle processing scheme,
-each instruction requires several clock cycles to execute (2 cycles for ALU operations, up to 40 cycles for divisions).
-The average CPI (cycles per instruction) depends on the instruction mix of a specific applications and also on the
-available CPU extensions.
-
-The following table shows the performance results (relative CoreMark score and average cycles per instruction) for
-_exemplary_ CPU configuration running 2000 iterations of the [CoreMark CPU benchmark](https://www.eembc.org/coremark).
-The source files are available in [`sw/example/coremark`](https://github.com/stnolting/neorv32/blob/master/sw/example/coremark).
-
-:information_source: A _simple_ port of the **Dhrystone** benchmark is also available:
-[`sw/example/dhrystone`](https://github.com/stnolting/neorv32/blob/master/sw/example/dhrystone)
-
-~~~
-**CoreMark Setup**
-Hardware:       32kB IMEM, 8kB DMEM, no caches, 100MHz clock
-CoreMark:       2000 iterations, MEM_METHOD is MEM_STACK
-Compiler:       RISCV32-GCC 10.1.0 (rv32i toolchain)
-Compiler flags: default, see makefile; optimization -O3
-~~~
-
-Results generated for hardware version [`1.5.7.10`](https://github.com/stnolting/neorv32/blob/master/CHANGELOG.md).
-
-| CPU Configuration                              | CoreMark Score | CoreMarks/MHz | Average CPI |
-|:-----------------------------------------------|:--------------:|:-------------:|:-----------:|
-| _small_ (`rv32i_Zicsr`)                        |          33.89 | **0.3389**    | **4.04**    |
-| _medium_ (`rv32imc_Zicsr`)                     |          62.50 | **0.6250**    | **5.34**    |
-| _performance_(`rv32imc_Zicsr` + perf. options) |          95.23 | **0.9523**    | **3.54**    |
-
-:information_source: More information regarding the CPU performance can be found in the
-[online documentation - _"CPU Performance"_](https://stnolting.github.io/neorv32/#_cpu_performance).
-
-[[back to top](#The-NEORV32-RISC-V-Processor)]
-
-
-
-## Software Framework and Tooling
-
-:books: In-depth detailed information regarding the software framework can be found in the
-[online documentation - _"Software Framework"_](https://stnolting.github.io/neorv32/#_software_framework).
-
-* [core libraries](https://github.com/stnolting/neorv32/tree/master/sw/lib) for high-level usage of the provided functions and peripherals
-* application compilation based on GNU makefiles
-* gcc-based toolchain ([pre-compiled toolchains available](https://github.com/stnolting/riscv-gcc-prebuilt))
-* bootloader with UART interface console
-* runtime environment for handling traps
-* several [example programs](https://github.com/stnolting/neorv32/tree/master/sw/example) to get started including CoreMark, FreeRTOS and *Conway's Game of Life*
-* `doxygen`-based documentation, available on [GitHub pages](https://stnolting.github.io/neorv32/sw/files.html)
-* supports implementation using open source tooling (GHDL, Yosys and nextpnr; in the future Verilog-to-Routing); both, software and hardware can be
-developed and debugged with open source tooling
-* continuous Integration is available for:
-  * allowing users to see the expected execution/output of the tools
-  * ensuring specification compliance
-  * catching regressions
-  * providing ready-to-use and up-to-date bitstreams and documentation
-
-[[back to top](#The-NEORV32-RISC-V-Processor)]
-
-
-
-## Getting Started
-
-This overview provides some *quick links* to the most important sections of the
-[online Data Sheet](https://stnolting.github.io/neorv32) and the
-[online User Guide](https://stnolting.github.io/neorv32/ug).
-
-### :electric_plug: Hardware Overview
-
-* [Rationale](https://stnolting.github.io/neorv32/#_rationale) - NEORV32: why, how come, what for
-
-* [NEORV32 Processor](https://stnolting.github.io/neorv32/#_neorv32_processor_soc) - the SoC
-  * [Top Entity - Signals](https://stnolting.github.io/neorv32/#_processor_top_entity_signals) - how to connect to the processor
-  * [Top Entity - Generics](https://stnolting.github.io/neorv32/#_processor_top_entity_generics) - configuration options
-  * [Address Space](https://stnolting.github.io/neorv32/#_address_space) - memory layout and boot configuration
-  * [SoC Modules](https://stnolting.github.io/neorv32/#_processor_internal_modules) - available IO/peripheral modules and memories
-  * [On-Chip Debugger](https://stnolting.github.io/neorv32/#_on_chip_debugger_ocd) - online & in-system debugging of the processor via JTAG
-
-* [NEORV32 CPU](https://stnolting.github.io/neorv32/#_neorv32_central_processing_unit_cpu) - the CPU
-  * [RISC-V compatibility](https://stnolting.github.io/neorv32/#_risc_v_compatibility) - what is compatible to the specs. and what is not
-  * [ISA and Extensions](https://stnolting.github.io/neorv32/#_instruction_sets_and_extensions) - available RISC-V ISA extensions
-  * [CSRs](https://stnolting.github.io/neorv32/#_control_and_status_registers_csrs) - control and status registers
-  * [Traps](https://stnolting.github.io/neorv32/#_traps_exceptions_and_interrupts) - interrupts and exceptions
-
-### :floppy_disk: Software Overview
-
-* [Core Libraries](https://stnolting.github.io/neorv32/#_core_libraries) - high-level functions for accessing the processor's peripherals
-  * [Software Framework Documentation](https://stnolting.github.io/neorv32/sw/files.html) - `doxygen`-based documentation
-* [Application Makefiles](https://stnolting.github.io/neorv32/#_application_makefile) - turning your application into an executable
-* [Bootloader](https://stnolting.github.io/neorv32/#_bootloader) - the build-in NEORV32 bootloader
-
-### :rocket: User Guides (see full [User Guide](https://stnolting.github.io/neorv32/ug/))
-
-* [Toolchain Setup](https://stnolting.github.io/neorv32/ug/#_toolchain_setup) - install and setup RISC-V gcc
-* [General Hardware Setup](https://stnolting.github.io/neorv32/ug/#_general_hardware_setup) - setup a new NEORV32 EDA project
-* [General Software Setup](https://stnolting.github.io/neorv32/ug/#_general_software_framework_setup) - configure the software framework
-* [Application Compilation](https://stnolting.github.io/neorv32/ug/#_application_program_compilation) - compile an application using `make`
-* [Upload via Bootloader](https://stnolting.github.io/neorv32/ug/#_uploading_and_starting_of_a_binary_executable_image_via_uart) - upload and execute executables
-* [Application-Specific Processor Configuration](https://stnolting.github.io/neorv32/ug/#_application_specific_processor_configuration) - tailor the processor to your needs
-* [Debugging via the On-Chip Debugger](https://stnolting.github.io/neorv32/ug/#_debugging_using_the_on_chip_debugger) - step through code *online* and *in-system*
-* [Simulation](https://stnolting.github.io/neorv32/ug/#_simulating_the_processor) - simulate the whole SoC
-  * [Hello World!](https://stnolting.github.io/neorv32/ug/index.html#_hello_world) - run a quick _"hello world"_ simulation
-
-### :copyright: Legal
-
-* [Overview](https://stnolting.github.io/neorv32/#_legal) - license, disclaimer, proprietary notice, ...
-* [Citing](https://stnolting.github.io/neorv32/#_citing) - citing information (DOI)
-* [Impressum](https://github.com/stnolting/neorv32/blob/master/docs/impressum.md) - imprint (:de:)
-
-[[back to top](#The-NEORV32-RISC-V-Processor)]
-
-
-
-## Acknowledgements
-
-**A big shoutout to all [contributors](https://github.com/stnolting/neorv32/graphs/contributors), who helped improving this project! :heart:**
-
-[RISC-V](https://riscv.org/) - Instruction Sets Want To Be Free!
-
-Continous integration provided by [:octocat: GitHub Actions](https://github.com/features/actions) and powered by [GHDL](https://github.com/ghdl/ghdl).
-
---------
-
-Made with :coffee: in Hannover, Germany :eu:

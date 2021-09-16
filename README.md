@@ -1,6 +1,11 @@
 # How to add a custom module - Cyclic Redundancy Check (CRC32) - Nexys A7 Board
 
-<!-- TODO: DO A TABLE CONTENT --> 
+* [Overview](#Overview)
+* [Introduction](#Introduction)
+* [Cyclic Redundancy Check (CRC32)](#Cyclic-Redundancy-Check-(CRC32))
+  * [Custom Functions Subsystem (CFS)](#Custom-Functions-Subsystem-(CFS))
+  * [Files to be modified](#Files-to-be-modified)
+  * [Test Example - Software](#Test-Example---Software)
 
 ## Overview
 
@@ -435,12 +440,7 @@ Next step is modify the following files:
     set_property -dict { PACKAGE_PIN C4  IOSTANDARD LVCMOS33 } [get_ports { uart0_rxd_i }]; #IO_L7P_T1_AD6P_35     Sch=uart_txd_in
     ```
 
-<!-- TODO: Improve this phrasing -->
-
 You now can proceed to perform the synthesis and generate the bitstream and upload it to the board.
-
-
-<!-- TODO: Put links -->
 
 To test that this logic works, we then continue writing a test in the [software folder](./sw). We can use the [blink_led](./sw/example/blink_led/main.c) program to test it quickly. 
 
@@ -616,7 +616,6 @@ To test that this logic works, we then continue writing a test in the [software 
       }
     }
     ```
-<!-- TODO: Improve this phrasing maybe pointed out the script which does all at once -->
 
 You now can proceed to perform the compilation of this test and upload the program into the board.
 

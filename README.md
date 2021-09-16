@@ -623,5 +623,5 @@ If everything goes well you will have something like this:
 
 ![video](./docs/figures/test.gif)
 
-Well done! You have add your own custom module! 🔥🔥🔥
+Well done! You have added your own custom module! 🔥🔥🔥
 

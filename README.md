@@ -83,7 +83,7 @@ Now we proceed to create and add to the processor our own CRC32 module called [n
   end process cr32_core;
 ```
 
-This logic simply takes and 8-bit data input `crc32_reg_wr(0)(7 downto 0)` and perform the CRC32 calculations and gives the result in `crc32_reg_rd(1)`. This also logic is executed any time when the input (`crc32_reg_wr(0)`) changes.
+This logic simply takes and 8-bit data input `crc32_reg_wr(0)(7 downto 0)` and perform the CRC32 calculations and gives the result in `crc32_reg_rd(1)`. This logic also is executed any time when the input (`crc32_reg_wr(0)`) changes.
 
 (If you are using Vivado don't forget to add it into the sources)
 
